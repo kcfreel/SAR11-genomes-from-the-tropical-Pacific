@@ -1,0 +1,213 @@
+---
+title: "global_read_recruitment_Nov24"
+author: "Kelle"
+date: "2024-11-04"
+output: html_document
+---
+
+# Get the read recruitment going
+
+### Make a folder with all of the genomes for recruitment
+```{r}
+
+# From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 268 representatives
+genomes_to_recruit_268 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/global_read_recruitment_Nov24/genomes_to_recruit.txt", stringsAsFactors = FALSE)
+
+# And then import the paths of all the genomes
+# From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 268 representatives
+paths_genomes_all_genomes <- read.csv("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/tables/complete_genome_set/504_isolates_SAGS_revised_16Oct24.csv", stringsAsFactors = FALSE)
+
+genomes_to_recruit_268_with_paths <- left_join(genomes_to_recruit_268, paths_genomes_all_genomes, by = c("accession"))
+
+write.csv(genomes_to_recruit_268_with_paths, file = "/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11//data/October24/global_read_recruitment_Nov24/genomes_to_recruit_268_with_paths.csv")
+
+/tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/data/global_read_recruitment/genomes_268/
+
+        # Used this to copy and paste all of the 268 genome files into a folder for read recruitment:
+        #       /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/data/global_read_recruitment/genomes_268
+        # text file with command "copy_command_genomes_268.txt"
+        
+```
+
+
+# Restart read recruitment swapping HIMB140 for HIMB1556
+
+```{bash}
+
+## These are the notes and edits I followed along with the following tutorial:
+# https://hackmd.io/@meren/H1IZ8EGec
+
+cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/data/global_read_recruitment
+
+export project="SAR11_NOV24_mapping_v2"
+
+mkdir SAR11_NOV24_mapping_v2
+mkdir genomes_268/RENAME
+cd genomes_268
+
+for i in *.fa
+do
+    genome_name=`echo $i | awk 'BEGIN{FS=".fa"}{print $1}'`
+    anvi-script-reformat-fasta $genome_name.fa \
+                               --simplify-names \
+                               --prefix $genome_name \
+                               --report-file $genome_name_RENAME.txt \
+                               --output-file RENAME/$genome_name.fa
+done
+
+# Generation of collections-txt file
+
+for i in genomes_268/RENAME/*fa
+do
+    genome_name=`basename $i | awk 'BEGIN{FS=".fa"}{print $1}'`
+    for c in `grep '>' genomes_268/RENAME/$genome_name.fa`
+    do
+        echo -e "${c:1}\t$genome_name"
+    done
+done > SAR11_NOV24_mapping_v2/collection.txt
+
+
+# Concatenate genomes into a single file 
+cat genomes_268/RENAME/*.fa > SAR11_NOV24_mapping_v2/SAR11_Nov24_v2.fa
+
+# Generate a fasta-txt file
+
+echo -e "name\tpath\nSAR11_NOV24_mapping_v2\t`pwd`/SAR11_Nov24_v2.fa" > SAR11_NOV24_mapping_v2/fasta.txt
+
+# Make sure it looks good 
+cat fasta.txt
+
+# I generated a samples.txt file that has three columns, sample name, r1 and r2, to check that there are three columns do this:
+
+# First let's test things with just a few larger samples and a few smaller samples to try to guess time 
+# File generated and named test_mapping.txt
+
+# Test if there are three columns 
+awk 'BEGIN{FS="\t"}{print NF}' test_mapping.txt | sort | uniq
+
+# To make sure that no files are missing, do this
+
+all_file_paths=`awk 'BEGIN{FS="\t"}{if(NR>1){ print $2 "\n" $3}}' test_mapping.txt`
+for file_path in $all_file_paths
+do
+    if [ ! -f $file_path ]
+    then
+        echo "missing file: $i"
+    fi
+done
+
+
+anvi-run-workflow -w metagenomics \
+                  --get-default-config config.json
+                  
+ # Changed to false:                 
+    "anvi_script_reformat_fasta": {
+        "run": false,
+
+
+anvi-run-workflow -c Nov15_config.json \
+                  -w metagenomics
+                  
+
+```
+
+# Summarize the read recruitment
+
+```{bash}
+
+anvi-import-collection collection_v2.txt -p 06_MERGED/SAR11_NOV24_mapping_v2/PROFILE.db -c 03_CONTIGS/SAR11_NOV24_mapping_v2-contigs.db -C SAR11_v2 --contigs-mode
+
+### WARNING
+### ===============================================
+### 202 item(s) that appeared only in the input file will be ignored (such as this
+### one: GCA_000504625_1_000000000082_split_00001). Just so you know.
+  
+anvi-interactive -p 06_MERGED/SAR11_NOV24_mapping_v2/PROFILE.db \
+                 -c 03_CONTIGS/SAR11_NOV24_mapping_v2-contigs.db \
+                 -C SAR11_v2
+
+anvi-summarize -c 03_CONTIGS/SAR11_NOV24_mapping_v2-contigs.db \
+               -p 06_MERGED/SAR11_NOV24_mapping_v2/PROFILE.db \
+               -C SAR11_v2 \
+               -o SUMMARY/SAR11_v2-SUMMARY  
+               
+               
+```
+
+# K-means clustering
+
+This is set up to run with custom script to be used in the anvi'o developer's version
+
+## Meren's instructions
+
+If you just would like to run everything from scratch,
+use the following command in an anvi'o dev environment:
+
+    ./03_RUN.sh
+
+Once you have run it, and if you wish to go back to
+where you left things off rather than starting from
+scratch, please run this:
+
+    cd RESULTS/
+    anvi-interactive -p profile.db \
+                     -d DETECTION.txt \
+                     -A sample_clusters.txt \
+                     --manual \
+                     --title "SAR11: Phylogenomics + Detection Across Metagenomes" \
+                     -t detection_for_items.tree
+
+That's it :)
+
+Once you have some collections you would like to summarize,
+run the following command in the main directory with a
+collection name, such as `mtg_42723_kf`:
+
+    python 04_SUMMARIZE_COLLECTION.py [COLLECTION_NAME]
+
+Once the collection is summarized, you should find a new
+directory called `ZZ_SUMMARY_FOR_[COLLECTION_NAME]/` with
+a file that includes the anvi-interactive command to
+visualize this summary. You can run it as many collections
+as you like and each of them will create their own
+directories for easy comparisons.
+
+
+```{bash}
+
+anvi-import-collection -C collection_draft_v1 -p profile.db metagenomes_2024_collection_july24_v2_foranvio.txt
+
+# That did not work, the bins were imported but no metagenomes were associated 
+
+# I manually updated the figure and now I am going to summarize it for Figure 2 to happen
+
+python 04_SUMMARIZE_COLLECTION.py default_update2
+
+
+anvi-import-misc-data PHYLOGENY_copy2.txt \
+                         -p profile.db \
+                         --target-data-table layer_orders
+                         
+    anvi-interactive -p profile.db \
+                     -d DETECTION.txt \
+                     -A sample_clusters.txt \
+                     --manual \
+                     --title "SAR11: Phylogenomics + Detection Across Metagenomes" \
+                     -t detection_for_items.tree                         
+
+anvi-summarize -p profile.db \
+               -o MY_SUMMARY/DEFAULT \
+               -C individual_37_bins
+               
+anvi-export-collection -C individual_37_bins \
+                        -p profile.db \
+                        -O individual_37_bins_export
+                        
+# Made the ZZ_ above directory named "RESULTS" and then put a phylogeny in the DATA folder and then reverted
+# So basically now I have a summary of that summary....
+python 04_SUMMARIZE_COLLECTION.py individual_37_bins 
+ 
+
+```
+
+

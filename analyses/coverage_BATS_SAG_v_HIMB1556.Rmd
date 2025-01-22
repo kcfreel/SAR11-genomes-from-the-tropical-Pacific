@@ -1,0 +1,140 @@
+---
+title: "mini metapangenome"
+author: "Kelle"
+date: "3/12/2024"
+output: html_document
+---
+
+# Ia3VI mini pangenome
+
+```{bash}
+cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/mini_pangenomes_v2/
+
+```
+
+### Prep the genomes of interest
+Put the genomes of interest in the folder: 
+/tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/mini_pangenomes_v2/01_FASTA/Ia3VI/
+
+Generate a collections-txt file
+
+```{bash}
+
+# Set the project here
+export project="Ia3VI_coverage"
+
+for i in *.fa
+do
+    genome_name=`echo $i | awk 'BEGIN{FS=".fa"}{print $1}'`
+    anvi-script-reformat-fasta $genome_name.fa \
+                               --simplify-names \
+                               --prefix $genome_name \
+                               --report-file $genome_name_RENAME.txt \
+                               --output-file RENAME/$genome_name.fa
+done
+
+for i in 01_FASTA/Ia3VI/RENAME/*fa
+do
+    genome_name=`basename $i | awk 'BEGIN{FS=".fa"}{print $1}'`
+    for c in `grep '>' 01_FASTA/Ia3VI/RENAME/$genome_name.fa`
+    do
+        echo -e "${c:1}\t$genome_name"
+    done
+done > Ia3VIcollection.txt
+
+# Concatenate genomes into a single file 
+cat 01_FASTA/Ia3VI/RENAME/*.fa > Ia3VI_coverage/Ia3VI_coverage.fa
+
+# Generate a fasta-txt file
+## Replace the project name with the one you used, e.g. previously I used "NITRO_june23_v1" and also updated the file name
+
+echo -e "name\tpath\Ia3VI_coverage\t`pwd`/Ia3VI_coverage.fa" > fasta.txt
+
+# Make a samples.txt file that has Hawai'i (only KByT, ALOHA 25m) and BATS (only summer surface) metagenomes 
+
+# Run the workflow (this ended up taking about 1.5 hours)
+
+anvi-run-workflow -c config.json \
+                  -w metagenomics
+
+# Now import the previously made collection 
+# (which I made wrong yet again, needed to update to collection name_####)
+anvi-import-collection Ia3VIcollection_update.txt -p 06_MERGED/Ia3VI_coverage/PROFILE.db -c 03_CONTIGS/Ia3VI_coverage-contigs.db -C Ia3VIcollection --contigs-mode
+
+anvi-interactive -p 06_MERGED/Ia3VI_coverage/PROFILE.db \
+                 -c 03_CONTIGS/Ia3VI_coverage-contigs.db \
+                 -C Ia3VIcollection
+                 
+
+# Summarize stuff to have all the numeros for detection and coverage             
+anvi-summarize -c 03_CONTIGS/Ia3VI_coverage-contigs.db \
+               -p 06_MERGED/Ia3VI_coverage/PROFILE.db \
+               -C Ia3VIcollection \
+               --init-gene-coverages \
+               -o Ia3VI-SUMMARY
+
+```
+
+
+```{bash}
+# Look at distribution of genes / coverage for each genome of interest
+anvi-script-gen-distribution-of-genes-in-a-bin -p 06_MERGED/Ia3VI_coverage/PROFILE.db \
+                                               -c 03_CONTIGS/Ia3VI_coverage-contigs.db \
+                                               -C Ia3VIcollection \
+                                               --fraction-of-median-coverage 0.25 \
+                                               -b GCA_902533445_1_AG_898_C07 
+                                               
+anvi-script-gen-distribution-of-genes-in-a-bin -p 06_MERGED/Ia3VI_coverage/PROFILE.db \
+                                               -c 03_CONTIGS/Ia3VI_coverage-contigs.db \
+                                               -C Ia3VIcollection \
+                                               --fraction-of-median-coverage 0.25 \
+                                               -b HIMB1556_final 
+
+mkdir GCA_902533445
+
+anvi-interactive -d GCA_902533445_1_AG_898_C07-GENE-COVs.txt \
+                 -A GCA_902533445_1_AG_898_C07-ENV-DETECTION.txt \
+                 --manual \
+                 -p GCA_902533445/GENES-PROFILE.db \
+                 --title "GCA_902533445 genes across Oceans"
+                 
+mkdir HIMB1556 
+
+anvi-interactive -d HIMB1556_final-GENE-COVs.txt \
+                 -A HIMB1556_final-ENV-DETECTION.txt \
+                 --manual \
+                 -p HIMB1556/GENES-PROFILE.db \
+                 --title "HIMB1556 genes across Oceans"
+
+
+# I want all of the gene orders to actually be in order, so attempting to import this
+anvi-import-items-order -p GCA_902533445/GENES-PROFILE.db \
+                        -i items_order/items_order_SAG_env_detection.txt \
+                        --name gene_number_ID
+
+anvi-import-items-order -p HIMB1556/GENES-PROFILE.db \
+                        -i items_order/items_order_HIMB1556_env_detection.txt \
+                        --name gene_number_ID
+
+# Import misc data 
+
+anvi-import-misc-data items/adding_items_SAG_v1.txt \
+                              -p GCA_902533445/GENES-PROFILE.db \
+                              --target-data-table items
+
+anvi-import-misc-data items/adding_items_HIMB1556_v1.txt \
+                              -p HIMB1556/GENES-PROFILE.db \
+                              --target-data-table items
+
+
+# Visualize again and clean up
+
+# Select only averages
+# 250 height, 30 custom margins, max value of 50 for HIMB1556, radius 1500
+# Unselect show shade and select invert shade (Opacity 0.1)
+# BATS: 6f9773 (HEX code for color)
+# ALOHA: 157ba1 (HEX code for color)
+# KByT: e99434 (HEX code for color)
+# Note: opposite order in the circle of averages for the SAG
+
+```

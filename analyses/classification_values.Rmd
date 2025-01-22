@@ -1,0 +1,214 @@
+---
+title: "genome_stats"
+author: "Kelle"
+date: "2024-04-24"
+output: html_document
+---
+
+# RED scores for the genomes in the extended phylogeny
+
+```{bash}
+
+anviGO
+conda activate gtdbtk-2.4.0
+
+cd /kfreel_data/SAR11_genomes/Freel_manu_SAR11/RED_scores
+
+# This first step is to put our genomes into context with all the other groups out there currently used for classification in GTDBtk
+
+gtdbtk de_novo_wf --batchfile batchfile_HIMB_refs_SAGs85_tab_removed_v2.txt --bac120_ms \
+    --out_dir ./SAR11_SAGs85_phylogeny_taxonomy/ --outgroup_taxon p__Chloroflexota \
+    -x fa --prefix sar11_SAGs85_taxonomy --cpus 20
+
+# Do this :
+gtdbtk classify --batchfile batchfile_HIMB_refs_SAGs85_v4.txt --align_dir SAR11_SAGs85_phylogeny_taxonomy_v3 --out_dir SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3 -x fa --prefix sar11_SAGs85_taxonomy --mash_db SAR11_SAGs85_phylogeny_taxonomy_v3/gtdb-tk-r207.msh --cpus 20
+
+# Now decorate:
+
+gtdbtk decorate --input_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify/sar11_SAGs85_taxonomy.bac120.classify.tree.4.tree --output_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify/sar11_taxonomy.bac120.decorated.tree
+
+conda activate bio-snake
+
+phylorank scale_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify/sar11_taxonomy.bac120.decorated.tree \
+    sar11_taxonomy_ani_v3.bac120.classify.tree
+
+```
+
+## Remove irrelevant genomes
+
+```{r}
+
+# After Oscar ran the scale_tree command from phylorank, he parsed the resulting tree down to only the SAR86 clade, here we want to do the same thing but for the SAR11 clade, so first we're going to load some packages
+
+setwd("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/")
+
+library(ggtree)
+library(treeio)
+library(tidyverse)
+library(svglite)
+library(ape)
+
+# Same formatting used for the SAR68 figures 
+
+mike_formatting <- theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12, face = "bold"), legend.text = element_text(size = 12),
+  panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), panel.border = element_rect(color = "black",
+    fill = NA, size = 1))
+stand_height <- 8.5
+stand_width <- 11
+
+gtdbtk_tree <- read.newick("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/sar11_phylogeny_red/sar11_phylogeny_red_v2/red_gtdbtk.bac120_v2.classify.tree")
+
+ancestor <- MRCA(gtdbtk_tree, c("HIMB1636_Ia.3.VI", "HIMB059_Va"))
+
+ancestor_tree <- tree_subset(gtdbtk_tree, ancestor, levels_back = 0)
+
+# Remove any GB genomes since those are from GTDB
+no_gtdb_sar11_tree <- drop.tip(ancestor_tree, ancestor_tree$tip.label[grep("GB_", ancestor_tree$tip.label)])
+
+# Remove any RS genomes since those are from GTDB
+no_gtdb_rs_sar11_tree <- drop.tip(no_gtdb_sar11_tree, no_gtdb_sar11_tree$tip.label[grep("RS_", no_gtdb_sar11_tree$tip.label)])
+
+write.tree(no_gtdb_rs_sar11_tree, file="no_gtdb_rs_sar11_tree")
+
+options(repr.plot.width = 30, repr.plot.height = 30)
+taxa_tree <- ggtree(no_gtdb_rs_sar11_tree) + geom_tiplab(size = 3, color = "black") + theme_tree2() + geom_label2(aes(label = node))
+taxa_tree
+
+```
+
+## Get values for node distances
+
+```{r}
+
+node_dists <- dist.nodes(no_gtdb_rs_sar11_tree)
+root_to_node_dists <- as_tibble(node_dists)
+
+colnames(root_to_node_dists) <- paste("Node", colnames(root_to_node_dists), sep = "_")
+
+#
+write.csv(root_to_node_dists, "root_to_node_dists.csv")
+#
+
+root_to_node_dists %>% ggplot(aes(x = Node_475)) + geom_histogram(bins=75) + ylab("Nodes") + mike_formatting
+
+```
+
+
+```{r}
+# Redo with larger set of genomes 
+# Okay After Oscar ran the scale_tree command from phylorank, he parsed the resulting tree down to only the SAR86 clade, here we want to do the same thing but for the SAR11 clade, so first we're going to load some packages
+
+setwd("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/520_genomes_RED/")
+
+library(ggtree)
+library(treeio)
+library(tidyverse)
+library(svglite)
+library(ape)
+library(rlang)
+
+mike_formatting <- theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12, face = "bold"), legend.text = element_text(size = 12),
+  panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), panel.border = element_rect(color = "black",
+    fill = NA, size = 1))
+stand_height <- 8.5
+stand_width <- 11
+
+gtdbtk_tree_521 <- read.newick("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/520_genomes_RED/sar11_SAGs85_taxonomy_520_v1.bac120.classify.tree")
+
+ancestor_521 <- MRCA(gtdbtk_tree_521, c("HIMB1636", "HIMB059"))
+
+ancestor_tree_521_v1 <- tree_subset(gtdbtk_tree_521, ancestor_521, levels_back = 0) # Wow struggle bus b/c I didn't update the "ancestor" input :|
+
+# Remove any GB genomes since those are from GTDB
+no_gtdb_sar11_tree_521 <- drop.tip(ancestor_tree_521_v1, ancestor_tree_521_v1$tip.label[grep("GB_", ancestor_tree_521_v1$tip.label)])
+
+# Remove any RS genomes since those are from GTDB
+no_gtdb_rs_sar11_tree_521 <- drop.tip(no_gtdb_sar11_tree_521, no_gtdb_sar11_tree_521$tip.label[grep("RS_", no_gtdb_sar11_tree_521$tip.label)])
+
+write.tree(no_gtdb_rs_sar11_tree_521, file="no_gtdb_rs_sar11_tree_521")
+
+options(repr.plot.width = 30, repr.plot.height = 30)
+taxa_tree_521 <- ggtree(no_gtdb_rs_sar11_tree_521) + geom_tiplab(size = 3, color = "black") + theme_tree2() + geom_label2(aes(label = node))
+taxa_tree_521
+
+
+get_taxa_name(tree_view = NULL, node = 978)
+
+svg("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/taxa_tree_521.svg", width = 25, height = 50, pointsize = 8)
+plot(taxa_tree_521)
+dev.off()  
+
+```
+
+
+```{r}
+
+node_dists_521 <- dist.nodes(no_gtdb_rs_sar11_tree_521)
+root_to_node_dists_521 <- as_tibble(node_dists_521)
+
+colnames(root_to_node_dists_521) <- paste("Node", colnames(root_to_node_dists_521), sep = "_")
+
+#
+write.csv(root_to_node_dists_521, "root_to_node_dists_521.csv")
+#
+
+# Node chosen b/c that's the root node in the previous plot 
+root_to_node_dists_521 %>% ggplot(aes(x = Node_522)) + geom_histogram(bins=75) + ylab("Nodes") + mike_formatting
+root_to_node_dists_521
+
+```
+
+
+```{r}
+
+# Get distance between root and SAR11 in Ia.3.VI 
+max_value_521 <- max(root_to_node_dists_521$Node_522)
+
+# Testing values following initial guidance of previous work
+family_red <- 0.23 # 0.23 1-0.77
+genera_red_SAR86 <- 0.085 # 0.085 = 0.1 1-0.915
+genera_red_test1 <- 0.12 # 0.12 = 1-0.88   
+genera_red_test2 <- 0.12 # 0.12 = 1-0.88 
+
+# species_red_521 <- 0.02 # 0.03 1-0.98
+
+family_clade <- max_value - family_red
+genera_clade_SAR86 <- max_value - genera_red_SAR86
+genera_clade_test1 <- max_value - genera_red_test1
+
+# species_clade_521 <- max_value - species_red_521
+
+cat("Max value RED value:", max_value_521)
+cat("\n")
+cat("Family clade RED value:", 1 - family_red)
+cat("\n")
+cat("Genera clade RED value:", 1 - genera_red_SAR86)
+cat("\n")
+cat("Genera test clade RED value:", 1 - genera_red_test1)
+cat("\n")
+
+# cat("Species clade RED value:", 1 - species_red_521)
+
+# Max value RED value: 0.3107154 for SAR86 and 0.373037 for SAR11 (521 genomes) (was previously 0.393719065)
+# Family clade RED value: 0.77 for SAR86 and 
+# Genera clade RED value: 0.915 for SAR86, test 1 0.88, test 2 0.93
+# Species clade RED value (?): 0.98 (generally made up here honestly)
+
+# taxa_tree_521_v1 had only the family clade and then the genera clade SAR86 on it, attempting to add an additional line
+
+taxa_tree_521_v2 <- ggtree(no_gtdb_rs_sar11_tree_521) + geom_tiplab(size = 2, color = "black") + theme_tree2() + geom_vline(xintercept = family_clade, color = "green" , size=2) + 
+        geom_vline(xintercept = genera_clade_SAR86, color = "purple", size =2) +
+        geom_vline(xintercept = genera_clade_test1, color = "pink", size =2) 
+taxa_tree_521_v2
+
+svg("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/520_genomes_RED/taxa_tree_lines_521_v2.svg", width = 25, height = 50, pointsize = 8)
+plot(taxa_tree_521_v2)
+dev.off()  
+
+# EXTRA
+
+bin_width <- max_value/75
+max_value+
+
+```
+
