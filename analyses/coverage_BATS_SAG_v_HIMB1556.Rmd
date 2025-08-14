@@ -1,20 +1,16 @@
----
-title: "mini metapangenome"
-author: "Kelle"
-date: "3/12/2024"
-output: html_document
----
+# mini metapangenome to determine coverage for the BATS SAG vs HIMB isolate genome
 
-# Ia3VI mini pangenome
+
+### Ia3VI mini pangenome
 
 ```{bash}
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/mini_pangenomes_v2/
+cd ~/path/to/working/directory
 
 ```
 
 ### Prep the genomes of interest
 Put the genomes of interest in the folder: 
-/tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/mini_pangenomes_v2/01_FASTA/Ia3VI/
+~/path/to/working/directory01_FASTA/Ia3VI/
 
 Generate a collections-txt file
 
@@ -129,12 +125,12 @@ anvi-import-misc-data items/adding_items_HIMB1556_v1.txt \
 
 # Visualize again and clean up
 
-# Select only averages
-# 250 height, 30 custom margins, max value of 50 for HIMB1556, radius 1500
-# Unselect show shade and select invert shade (Opacity 0.1)
-# BATS: 6f9773 (HEX code for color)
-# ALOHA: 157ba1 (HEX code for color)
-# KByT: e99434 (HEX code for color)
-# Note: opposite order in the circle of averages for the SAG
+#### Select only averages
+#### 250 height, 30 custom margins, max value of 50 for HIMB1556, radius 1500
+#### Unselect show shade and select invert shade (Opacity 0.1)
+#### BATS: 6f9773 (HEX code for color)
+#### ALOHA: 157ba1 (HEX code for color)
+#### KByT: e99434 (HEX code for color)
+#### Note: opposite order in the circle of averages for the SAG
 
 ```
