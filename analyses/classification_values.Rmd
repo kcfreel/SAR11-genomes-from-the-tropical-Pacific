@@ -1,9 +1,5 @@
----
-title: "genome_stats"
-author: "Kelle"
-date: "2024-04-24"
-output: html_document
----
+# Genome_stats
+
 
 # RED scores for the genomes in the extended phylogeny
 
@@ -12,7 +8,7 @@ output: html_document
 anviGO
 conda activate gtdbtk-2.4.0
 
-cd /kfreel_data/SAR11_genomes/Freel_manu_SAR11/RED_scores
+cd ~/path/to/working/directory
 
 # This first step is to put our genomes into context with all the other groups out there currently used for classification in GTDBtk
 
@@ -25,11 +21,11 @@ gtdbtk classify --batchfile batchfile_HIMB_refs_SAGs85_v4.txt --align_dir SAR11_
 
 # Now decorate:
 
-gtdbtk decorate --input_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify/sar11_SAGs85_taxonomy.bac120.classify.tree.4.tree --output_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify/sar11_taxonomy.bac120.decorated.tree
+gtdbtk decorate --input_tree ~/path/to/working/directory/classify/sar11_SAGs85_taxonomy.bac120.classify.tree.4.tree --output_tree ~/path/to/working/directory/classify_ani_v3/classify/sar11_taxonomy.bac120.decorated.tree
 
 conda activate bio-snake
 
-phylorank scale_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify/sar11_taxonomy.bac120.decorated.tree \
+phylorank scale_tree ~/path/to/working/directory/classify/sar11_taxonomy.bac120.decorated.tree \
     sar11_taxonomy_ani_v3.bac120.classify.tree
 
 ```
@@ -38,9 +34,9 @@ phylorank scale_tree SAR11_SAGs85_phylogeny_taxonomy_v3/classify_ani_v3/classify
 
 ```{r}
 
-# After Oscar ran the scale_tree command from phylorank, he parsed the resulting tree down to only the SAR86 clade, here we want to do the same thing but for the SAR11 clade, so first we're going to load some packages
+# After running the 'scale_tree' command from phylorank, it is time to parse the resulting tree to the SAR11 clade, so first we're going to load some packages
 
-setwd("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/")
+setwd("~/path/to/working/directory/")
 
 library(ggtree)
 library(treeio)
@@ -56,7 +52,7 @@ mike_formatting <- theme(axis.text = element_text(size = 12), axis.title = eleme
 stand_height <- 8.5
 stand_width <- 11
 
-gtdbtk_tree <- read.newick("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/sar11_phylogeny_red/sar11_phylogeny_red_v2/red_gtdbtk.bac120_v2.classify.tree")
+gtdbtk_tree <- read.newick("~/path/to/working/directory/data/RED_scores/sar11_phylogeny_red/sar11_phylogeny_red_v2/red_gtdbtk.bac120_v2.classify.tree")
 
 ancestor <- MRCA(gtdbtk_tree, c("HIMB1636_Ia.3.VI", "HIMB059_Va"))
 
@@ -98,7 +94,7 @@ root_to_node_dists %>% ggplot(aes(x = Node_475)) + geom_histogram(bins=75) + yla
 # Redo with larger set of genomes 
 # Okay After Oscar ran the scale_tree command from phylorank, he parsed the resulting tree down to only the SAR86 clade, here we want to do the same thing but for the SAR11 clade, so first we're going to load some packages
 
-setwd("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/520_genomes_RED/")
+setwd("~/path/to/working/directory/data/RED_scores/520_genomes_RED/")
 
 library(ggtree)
 library(treeio)
@@ -113,7 +109,7 @@ mike_formatting <- theme(axis.text = element_text(size = 12), axis.title = eleme
 stand_height <- 8.5
 stand_width <- 11
 
-gtdbtk_tree_521 <- read.newick("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/520_genomes_RED/sar11_SAGs85_taxonomy_520_v1.bac120.classify.tree")
+gtdbtk_tree_521 <- read.newick("~/path/to/working/directory/data/RED_scores/520_genomes_RED/sar11_SAGs85_taxonomy_520_v1.bac120.classify.tree")
 
 ancestor_521 <- MRCA(gtdbtk_tree_521, c("HIMB1636", "HIMB059"))
 
@@ -134,7 +130,7 @@ taxa_tree_521
 
 get_taxa_name(tree_view = NULL, node = 978)
 
-svg("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/taxa_tree_521.svg", width = 25, height = 50, pointsize = 8)
+svg("~/path/to/working/directory/taxa_tree_521.svg", width = 25, height = 50, pointsize = 8)
 plot(taxa_tree_521)
 dev.off()  
 
@@ -201,7 +197,7 @@ taxa_tree_521_v2 <- ggtree(no_gtdb_rs_sar11_tree_521) + geom_tiplab(size = 2, co
         geom_vline(xintercept = genera_clade_test1, color = "pink", size =2) 
 taxa_tree_521_v2
 
-svg("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/RED_scores/520_genomes_RED/taxa_tree_lines_521_v2.svg", width = 25, height = 50, pointsize = 8)
+svg("~/path/to/working/directory/data/RED_scores/520_genomes_RED/taxa_tree_lines_521_v2.svg", width = 25, height = 50, pointsize = 8)
 plot(taxa_tree_521_v2)
 dev.off()  
 
