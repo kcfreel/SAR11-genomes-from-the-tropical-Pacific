@@ -1,12 +1,7 @@
----
-title: "NMDS"
-author: "Kelle"
-date: "2024-11-4"
-output: html_document
----
+# NMDS Analysis 
 
+### Load relevant packages and import data
 
-import data
 ```{r}
 library(here)
 library(tidyverse)
@@ -16,28 +11,29 @@ library(ggplot2)
 library(ggplotify)
 library(sjPlot)
 
-setwd("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/")
-coverage.in <- read.csv(file = here("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/Q2Q3.csv"))
-detection.in <- read.csv(file = here("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/DETECTION.csv"))
-sar11.info.in <- read.table(file = here("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/SAR11-INFO.txt"), header = T)
+setwd("~/path/to/working/directory/")
+coverage.in <- read.csv(file = here("~/path/to/working/directory/Q2Q3.csv"))
+detection.in <- read.csv(file = here("~/path/to/working/directory/DETECTION.csv"))
+sar11.info.in <- read.table(file = here("~/path/to/working/directory/SAR11-INFO.txt"), header = T)
 
 ```
 
-add metadata and transpose
+### Add metadata
+
 ```{r}
 coverage <- coverage.in %>% filter(metagenome!="LEW_ERR771105_OSD14_1m")
 detection <- detection.in %>% filter(metagenome!="LEW_ERR771105_OSD14_1m")
 sar11.info <- sar11.info.in
 ```
 
-transpose
+### Transpose
 ```{r}
 coverage_t <- coverage %>% pivot_longer(!metagenomes, names_to = "genome", values_to = "cov") %>% pivot_wider(names_from = metagenomes, values_from = cov) %>% full_join(.,sar11.info %>% select(c("genome", "type", "sublineage")), by = "genome") %>% relocate(genome, type, sublineage)
 
 detection_t <- detection %>% pivot_longer(!metagenomes, names_to = "genome", values_to = "cov") %>% pivot_wider(names_from = metagenomes, values_from = cov) %>% full_join(.,sar11.info %>% select(c("genome", "type", "sublineage")), by = "genome") %>% relocate(genome, type, sublineage)
 ```
 
-nmds
+### NMDS
 ```{r}
 #coverage
 cov.nmds.matrix <- as.matrix(coverage_t[,4:ncol(coverage_t)])
@@ -131,7 +127,7 @@ plot <- plot + scale_shape_manual(values = shape_mapping)
     scale_colour_manual(values = color_mapping) +
     geom_text(alpha=0))
 #This actually save the plot in a image
-    ggsave(file="/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/images/nmds_v1.svg", plot=image, width=10, height=8)
+    ggsave(file="~/path/to/working/directory/nmds_v1.svg", plot=image, width=10, height=8)
     
     
 ggplot(det.scores, aes(x = NMDS1, y = NMDS2, label = genome)) + 
@@ -139,11 +135,11 @@ ggplot(det.scores, aes(x = NMDS1, y = NMDS2, label = genome)) +
     scale_colour_manual(values = color_mapping) +
     geom_text(alpha=0)
 
-ggsave("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/images/nmds_v1.svg")
+ggsave("~/path/to/working/directory/images/nmds_v1.svg")
 
-ggsave("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/images/nmds_v1.svg", width = 50, height = 30, units = "cm")
+ggsave("~/path/to/working/directory/images/nmds_v1.svg", width = 50, height = 30, units = "cm")
 
-ggsave("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/images/nmds_v2.svg", width = 50, height = 50, units = "cm")
+ggsave("~/path/to/working/directory/images/nmds_v2.svg", width = 50, height = 50, units = "cm")
 
 
 install.packages("htmlwidgets")
@@ -154,7 +150,7 @@ ggplotly(ggplot(det.scores, aes(x = NMDS1, y = NMDS2, label = genome)) +
     scale_colour_manual(values = color_mapping) +
     geom_text(alpha=0))
 
-ggsave("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/images/nmds_v3.svg", width = 50, height = 30, units = "cm")
+ggsave("~/path/to/working/directory/images/nmds_v3.svg", width = 50, height = 30, units = "cm")
 
 
 install.packages("htmlwidgets")
@@ -167,7 +163,7 @@ ggplotly_to_save <- ggplotly(ggplot(det.scores, aes(x = NMDS1, y = NMDS2, label 
 
 # save
 saveWidget(widget = ggplotly_to_save,
-           file = "/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/NMDS_metagenomes_jan25/images/nmds_v3.html")
+           file = "~/path/to/working/directory/images/nmds_v3.html")
     
 ```
 
