@@ -1,9 +1,5 @@
----
-title: "global_read_recruitment_Nov24"
-author: "Kelle"
-date: "2024-11-04"
-output: html_document
----
+# Global_read_recruitment
+
 
 # Get the read recruitment going
 
@@ -11,21 +7,18 @@ output: html_document
 ```{r}
 
 # From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 268 representatives
-genomes_to_recruit_268 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/global_read_recruitment_Nov24/genomes_to_recruit.txt", stringsAsFactors = FALSE)
+genomes_to_recruit_268 <- read.delim("~/path/to/working/directory/global_read_recruitment/genomes_to_recruit.txt", stringsAsFactors = FALSE)
 
 # And then import the paths of all the genomes
 # From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 268 representatives
-paths_genomes_all_genomes <- read.csv("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/tables/complete_genome_set/504_isolates_SAGS_revised_16Oct24.csv", stringsAsFactors = FALSE)
+paths_genomes_all_genomes <- read.csv("~/path/to/working/directory/tables/complete_genome_set/504_isolates_SAGS_revised_16Oct24.csv", stringsAsFactors = FALSE)
 
 genomes_to_recruit_268_with_paths <- left_join(genomes_to_recruit_268, paths_genomes_all_genomes, by = c("accession"))
 
-write.csv(genomes_to_recruit_268_with_paths, file = "/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11//data/October24/global_read_recruitment_Nov24/genomes_to_recruit_268_with_paths.csv")
+write.csv(genomes_to_recruit_268_with_paths, file = "~/path/to/working/directory/global_read_recruitment/genomes_to_recruit_268_with_paths.csv")
 
-/tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/data/global_read_recruitment/genomes_268/
-
-        # Used this to copy and paste all of the 268 genome files into a folder for read recruitment:
-        #       /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/data/global_read_recruitment/genomes_268
-        # text file with command "copy_command_genomes_268.txt"
+        # Copied all of the 268 genome files into a folder for read recruitment:
+        #      ~/path/to/working/directory/genomes_268 with command "copy_command_genomes_268.txt"
         
 ```
 
@@ -37,11 +30,11 @@ write.csv(genomes_to_recruit_268_with_paths, file = "/Users/kellefreel/Documents
 ## These are the notes and edits I followed along with the following tutorial:
 # https://hackmd.io/@meren/H1IZ8EGec
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/data/global_read_recruitment
+cd ~/path/to/working/directory
 
-export project="SAR11_NOV24_mapping_v2"
+export project="SAR11_mapping"
 
-mkdir SAR11_NOV24_mapping_v2
+mkdir SAR11_mapping
 mkdir genomes_268/RENAME
 cd genomes_268
 
@@ -64,15 +57,15 @@ do
     do
         echo -e "${c:1}\t$genome_name"
     done
-done > SAR11_NOV24_mapping_v2/collection.txt
+done > SAR11_mapping/collection.txt
 
 
 # Concatenate genomes into a single file 
-cat genomes_268/RENAME/*.fa > SAR11_NOV24_mapping_v2/SAR11_Nov24_v2.fa
+cat genomes_268/RENAME/*.fa > SAR11_mapping/SAR11.fa
 
 # Generate a fasta-txt file
 
-echo -e "name\tpath\nSAR11_NOV24_mapping_v2\t`pwd`/SAR11_Nov24_v2.fa" > SAR11_NOV24_mapping_v2/fasta.txt
+echo -e "name\tpath\nSAR11_mapping\t`pwd`/SAR11.fa" > SAR11_mapping/fasta.txt
 
 # Make sure it looks good 
 cat fasta.txt
@@ -115,21 +108,21 @@ anvi-run-workflow -c Nov15_config.json \
 
 ```{bash}
 
-anvi-import-collection collection_v2.txt -p 06_MERGED/SAR11_NOV24_mapping_v2/PROFILE.db -c 03_CONTIGS/SAR11_NOV24_mapping_v2-contigs.db -C SAR11_v2 --contigs-mode
+anvi-import-collection collection_v2.txt -p 06_MERGED/SAR11_mapping/PROFILE.db -c 03_CONTIGS/SAR11_mapping-contigs.db -C SAR11_v2 --contigs-mode
 
 ### WARNING
 ### ===============================================
 ### 202 item(s) that appeared only in the input file will be ignored (such as this
 ### one: GCA_000504625_1_000000000082_split_00001). Just so you know.
   
-anvi-interactive -p 06_MERGED/SAR11_NOV24_mapping_v2/PROFILE.db \
-                 -c 03_CONTIGS/SAR11_NOV24_mapping_v2-contigs.db \
+anvi-interactive -p 06_MERGED/SAR11_mapping/PROFILE.db \
+                 -c 03_CONTIGS/SAR11_mapping-contigs.db \
                  -C SAR11_v2
 
-anvi-summarize -c 03_CONTIGS/SAR11_NOV24_mapping_v2-contigs.db \
-               -p 06_MERGED/SAR11_NOV24_mapping_v2/PROFILE.db \
+anvi-summarize -c 03_CONTIGS/SAR11_mapping-contigs.db \
+               -p 06_MERGED/SAR11_mapping/PROFILE.db \
                -C SAR11_v2 \
-               -o SUMMARY/SAR11_v2-SUMMARY  
+               -o SUMMARY/SAR11-SUMMARY  
                
                
 ```
@@ -161,7 +154,7 @@ That's it :)
 
 Once you have some collections you would like to summarize,
 run the following command in the main directory with a
-collection name, such as `mtg_42723_kf`:
+collection name, such as `mtg_date_initials`:
 
     python 04_SUMMARIZE_COLLECTION.py [COLLECTION_NAME]
 
@@ -175,14 +168,13 @@ directories for easy comparisons.
 
 ```{bash}
 
-anvi-import-collection -C collection_draft_v1 -p profile.db metagenomes_2024_collection_july24_v2_foranvio.txt
+anvi-import-collection -C collection_draft_v1 -p profile.db metagenomes_foranvio.txt
 
 # That did not work, the bins were imported but no metagenomes were associated 
 
 # I manually updated the figure and now I am going to summarize it for Figure 2 to happen
 
 python 04_SUMMARIZE_COLLECTION.py default_update2
-
 
 anvi-import-misc-data PHYLOGENY_copy2.txt \
                          -p profile.db \
