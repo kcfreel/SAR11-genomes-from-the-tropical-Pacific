@@ -1,21 +1,18 @@
----
-title: "02_Phylogeny_268"
-author: "Kelle"
-date: "2024-10-24"
-output: html_document
----
+# Phylogenies 
 
-# Initial phylogeny
+## Initial phylogeny
 
 ### Prepare the external-genomes.txt file
 
 ```{r}
 # Remove the identified IV and V genomes from the "external_genomes_504_set_outgroup_v3.txt" file
 
-# First read in the appropriate old file
-external_genomes_504_set_outgroup_v3 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/phylogeny_prep/external_genomes_504_set_outgroup_v3.txt", stringsAsFactors = FALSE)
+setwd ("~/path/to/working/directory/phylogeny_prep")
 
-IV_V_remove <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/phylogeny_prep/IV_and_V_remove_481.txt", stringsAsFactors = FALSE)
+# First read in the appropriate old file
+external_genomes_504_set_outgroup_v3 <- read.delim("external_genomes_504_set_outgroup_v3.txt", stringsAsFactors = FALSE)
+
+IV_V_remove <- read.delim("IV_and_V_remove_481.txt", stringsAsFactors = FALSE)
 
 # This is one way to remove, BUT the names in the columns must be IDENTICAL, and I realized something was wrong so couldn't use this
 # external_genomes_484_set_outgroup_v1 <- anti_join(external_genomes_504_set_outgroup_v3, IV_V_remove, by = c("name"))
@@ -24,7 +21,7 @@ IV_V_remove <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel
 external_genomes_484_set_outgroup_v1 <- external_genomes_504_set_outgroup_v3 %>%
   filter(!sapply(name, function(x) any(str_starts(x, IV_V_remove$name))))
 
-write.csv(external_genomes_481_set_outgroup_v1, file = "/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/phylogeny_prep/external_genomes_481_set_outgroup_v1.csv")
+write.csv(external_genomes_481_set_outgroup_v1, file = "external_genomes_481_set_outgroup_v1.csv")
 
 # 
 
@@ -35,7 +32,7 @@ write.csv(external_genomes_481_set_outgroup_v1, file = "/Users/kellefreel/Docume
 ```{bash}
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_504_outgroup_23oct24
+cd ~/path/to/working/directory/phylogenies/SAR11_165_504_outgroup
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_481_set_outgroup_v1.csv \
                                 -o concatenated_genes_v2_excl_IV_V/concatenated-best_alphaproteobacteria165.fa \
@@ -51,10 +48,10 @@ trimal -in concatenated_genes_v2_excl_IV_V/concatenated-best_alphaproteobacteria
        -out concatenated_genes_v2_excl_IV_V/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Started with the specific model
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_504_outgroup_23oct24/concatenated_genes_v2_excl_IV_V/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated_genes_v2_excl_IV_V/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 
 # Restarted as I realized three somehow remaining IV genomes still in there
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_504_outgroup_23oct24/concatenated_genes_v2_actually_exl_IV/concatenated-best_alphaproteobacteria165_out-clean_v2.fa -m LG+F+R10 -T AUTO -ntmax 35 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated_genes_v2_actually_exl_IV/concatenated-best_alphaproteobacteria165_out-clean_v2.fa -m LG+F+R10 -T AUTO -ntmax 35 --alrt 1000 -B 1000 --mem 60G
 
 ```
 
@@ -68,15 +65,15 @@ library(dplyr)
 # Previously the identified IV and V genomes were already removed
 
 # First read in the appropriate old file, this is the most updated with only 484 SAR11 genomes 
-external_genomes_484_set_outgroup_v1 <- read.csv("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/phylogeny_prep/external_genomes_484_set_outgroup_v1.csv", stringsAsFactors = FALSE)
+external_genomes_484_set_outgroup_v1 <- read.csv("external_genomes_484_set_outgroup_v1.csv", stringsAsFactors = FALSE)
 
 # Now read in the file with the genomes to retain 
-final_SAR11_268 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/phylogeny_prep/final_SAR11_269_name.txt", stringsAsFactors = FALSE)
+final_SAR11_268 <- read.delim("final_SAR11_269_name.txt", stringsAsFactors = FALSE)
 
 # Now add the file paths to the final_SAR11_268 file to make a phylogeny
 external_genomes_268_set <- left_join(final_SAR11_268, external_genomes_484_set_outgroup_v1, by = c("name"))
 
-write.csv(external_genomes_268_set, file = "/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/phylogeny_prep/external_genomes_268_set.csv")
+write.csv(external_genomes_268_set, file = "external_genomes_268_set.csv")
 
 # Now add the outgroup and the path to the outgroup
 
@@ -87,7 +84,7 @@ write.csv(external_genomes_268_set, file = "/Users/kellefreel/Documents/HIMB/Pro
 ```{bash}
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_29oct24
+cd ~/path/to/working/directory
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_268_set_outgroup_v1.txt \
                                 -o concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165.fa \
@@ -103,10 +100,9 @@ trimal -in concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165.fa
        -out concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Run the tree in IQtree
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_29oct24/concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 10 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 10 --alrt 1000 -B 1000 --mem 60G
 
 ```
-
 
 Fixing the last genome, changing HIMB140 to HIMB1556 
 Will be updating the name of the external genomes file to "v2"
@@ -114,7 +110,7 @@ Will be updating the name of the external genomes file to "v2"
 ```{bash}
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_12nov24
+cd ~/path/to/working/directory
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_268_set_outgroup_v2.txt \
                                 -o concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165.fa \
@@ -130,7 +126,7 @@ trimal -in concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165.fa
        -out concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Restart the tree
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_12nov24/concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 35 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 35 --alrt 1000 -B 1000 --mem 60G
 
 ```
 
@@ -142,11 +138,13 @@ iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phyl
 
 library(tidyr)
 
-SAR11_CLUSTER_REPORT_504_v6 <- read.csv("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/fastANI_dereplication_prep/SAR11_CLUSTER_REPORT_504_v6.csv", stringsAsFactors = FALSE)
+setwd ("~/path/to/working/directory")
+
+SAR11_CLUSTER_REPORT_504_v6 <- read.csv("SAR11_CLUSTER_REPORT_504_v6.csv", stringsAsFactors = FALSE)
 
 CLUSTER_REPORT_504_v6_long <- separate_longer_delim(SAR11_CLUSTER_REPORT_504_v6,"genomes", delim=";")
 
-write.csv(CLUSTER_REPORT_504_v6_long, file="/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/October24/fastANI_dereplication_prep/SAR11_CLUSTER_REPORT_504_v6_long.csv")
+write.csv(CLUSTER_REPORT_504_v6_long, file="SAR11_CLUSTER_REPORT_504_v6_long.csv")
 
 ```
 
@@ -159,8 +157,8 @@ write.csv(CLUSTER_REPORT_504_v6_long, file="/Users/kellefreel/Documents/HIMB/Pro
 #       -d is to the file with layers
 #       -t is to the phylogeny of interest 
 
-# This is for the mega tree that was REDONE yet again since a few IV genomes had been left in there *smacks face* 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_504_outgroup_23oct24/concatenated_genes_v2_actually_exl_IV
+# This is for the mega tree that was REDONE yet again since a few IV genomes were accidentally included
+cd ~/path/to/working/directory
 
 anvi-interactive -p SAR11_481_v2.db \
                  -d LAYERS/LAYERS_SAR11_481_v6.txt \
@@ -179,29 +177,32 @@ anvi-import-collection -C collection_genera \
 
 ### 268 genomes
 
-Prepare the layers file for the succint tree
+Prepare the layers file for the succinct tree, using the layers file already generated for the 481 genomes
 
 ```{r}
 
+cd ~/path/to/working/directory
+
 # import the layers from the 481
-LAYERS_SAR11_481_v1 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_504_outgroup_23oct24/concatenated_genes_v2_excl_IV_V/LAYERS/LAYERS_SAR11_481_v1.txt", stringsAsFactors = FALSE)
+LAYERS_SAR11_481_v1 <- read.delim("LAYERS_SAR11_481_v1.txt", stringsAsFactors = FALSE)
 
 # now import the list of the 268 
-set_268 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_268_outgroup_29oct24/concatenated_genes_268_v1/LAYERS/genomes_268_set.txt", stringsAsFactors = FALSE)
+set_268 <- read.delim("genomes_268_set.txt", stringsAsFactors = FALSE)
 
 # JOIN these sweet baby angels
 
 LAYERS_SAR11_268_v1 <- left_join(set_268, LAYERS_SAR11_481_v1, by = c("genome"))
 
 # write the file
-write_delim(LAYERS_SAR11_268_v1, file="/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_268_outgroup_29oct24/concatenated_genes_268_v1/LAYERS/LAYERS_SAR11_268_v1.txt")
+write_delim(LAYERS_SAR11_268_v1, file="LAYERS_SAR11_268_v1.txt")
 
 # At this point, sort the table by subgroup and check a type genome has been chosen for each one 
 # Also finalize the number of genera defined here
 
 ```
  
- 
+## Visualize the tree and import the genera 
+
 ```{bash}
 
 # This is for the pruned tree 
@@ -217,15 +218,13 @@ anvi-import-collection -C collection_genera \
                         --bins-info bin_color_info_v1.txt \
                         collection_genera_268_v2.txt
 
-
-
 ```
 
-# 
+# Visualize the tree that now has the correct genome (HIMB1556 vs HIMB140)
 ```{bash}
 
-# This is for the succinct tree with HIMB1556 vs HIMB140 (nov 12 tree)
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_12nov24/concatenated_genes_268_v2
+# This is for the succinct tree with HIMB1556 vs HIMB140
+cd ~/path/to/working/directory
 
 anvi-interactive -p SAR11_268_v2.db \
                  -d LAYERS/LAYERS_SAR11_268_v4.txt \
@@ -248,10 +247,10 @@ anvi-interactive -p SAR11_268_v2.db \
                  --manual     
 
 ## Adding detection values to re-make a figure for supplemental reasons   
-# mkdir /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_12nov24/concatenated_genes_268_v2_avedetection
+mkdir concatenated_genes_268_v2_avedetection
 # put relevant files in there
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_268_outgroup_12nov24/concatenated_genes_268_v2_avedetection
+cd ~/concatenated_genes_268_v2_avedetection
 
 anvi-interactive -p SAR11_268_v2.db \
                  -d LAYERS/LAYERS_SAR11_268_v5_averages.txt \
@@ -262,27 +261,26 @@ anvi-interactive -p SAR11_268_v2.db \
 
 ```
 
+## Generate a tree that has all 481 genomes plus the GTDB classification as well as the RED scores at 0.77, etc
+
 ```{r}
-
-# Okay now need to make a tree that has all 481 genomes plus the GTDB classification as well as the RED scores at 0.77, etc
-
-layers_gtdb_17sept24_v3 <- read.csv("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/data/velocirappetor/concatenated_genes_v5_nodups/layers_gtdb_17sept24_v3.txt", header = TRUE,  sep = "\t")
+layers_gtdb_v3 <- read.csv("layers_gtdb_v3.txt", header = TRUE,  sep = "\t")
 
 LAYERS_SAR11_481_v15_ecogenomics_GTDB <- LAYERS_SAR11_481_v15_ecogenomics %>% 
-  left_join(y=layers_gtdb_17sept24_v3, by=c("name" = "genomes"))
+  left_join(y=layers_gtdb_v3, by=c("name" = "genomes"))
 
-write_delim(LAYERS_SAR11_481_v15_ecogenomics_GTDB, file="/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_504_outgroup_23oct24/concatenated_genes_v2_actually_exl_IV/LAYERS/LAYERS_SAR11_481_v15_ecogenomics_GTDB.txt")
+write_delim(LAYERS_SAR11_481_v15_ecogenomics_GTDB, file="LAYERS_SAR11_481_v15_ecogenomics_GTDB.txt")
 
 # Some manual updates and now its v16
-LAYERS_SAR11_481_v16_ecogenomics_GTDB <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_504_outgroup_23oct24/concatenated_genes_v2_actually_exl_IV/LAYERS/LAYERS_SAR11_481_v16_ecogenomics_GTDB.txt", header = TRUE,  sep = "\t")
+LAYERS_SAR11_481_v16_ecogenomics_GTDB <- read.delim("LAYERS_SAR11_481_v16_ecogenomics_GTDB.txt", header = TRUE,  sep = "\t")
 
 # Going to import this into the 268 genomes layers and make a tree with that because that actually makes more sense
-LAYERS_SAR11_268_v5 <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_268_outgroup_12nov24/LAYERS/LAYERS_SAR11_268_v5.txt", header = TRUE,  sep = "\t")
+LAYERS_SAR11_268_v5 <- read.delim("LAYERS_SAR11_268_v5.txt", header = TRUE,  sep = "\t")
 
 LAYERS_SAR11_268_v6 <- LAYERS_SAR11_268_v5 %>% 
   left_join(y=LAYERS_SAR11_481_v16_ecogenomics_GTDB, by=c("accession" = "accession"))
 
-write.csv(LAYERS_SAR11_268_v6, file="/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_268_outgroup_12nov24/LAYERS/LAYERS_SAR11_268_v6.csv")
+write.csv(LAYERS_SAR11_268_v6, file="LAYERS/LAYERS_SAR11_268_v6.csv")
 
 # See below for new anvi interactive
 
@@ -302,12 +300,13 @@ anvi-interactive -p SAR11_268_v2.db \
 
 
 # To demonstrate Ic genomes are in the same monophyletic clade 
+### This is relevant to Supplementary Figure 9
 
 ```{bash}
 
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/Ic
+cd ~/path/to/working/directory
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_Ic_outgroup.txt \
                                 -o Ic/concatenated-best_alphaproteobacteria165.fa \
@@ -323,37 +322,39 @@ trimal -in Ic/concatenated-best_alphaproteobacteria165.fa \
        -out Ic/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Started with the specific model
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/Ic/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 
-mkdir /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/Ic_WAG
+mkdir Ic_WAG
 
-cp /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/Ic/concatenated-best_alphaproteobacteria165_out-clean.fa /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/Ic_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
+cp ~/Ic/concatenated-best_alphaproteobacteria165_out-clean.fa ~Ic_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
 
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/Ic_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s Ic_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 
 ```
 
 # To demonstrate II genomes are in the same monophyletic clade 
 
 ```{r}
+setwd ("~/path/to/working/directory")
 
-II_include <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/Ic_II_SAG_MAG/II_to_include.txt", header = TRUE,  sep = "\t") 
+II_include <- read.delim("II_to_include.txt", header = TRUE,  sep = "\t") 
 
-external_paths <- read.delim("/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/SAR11_165_504_outgroup_23oct24/external_genomes_504_set_outgroup_v3.txt", header = TRUE,  sep = "\t") 
+external_paths <- read.delim("external_genomes_504_set_outgroup_v3.txt", header = TRUE,  sep = "\t") 
 
 external_genomes_II_include <- II_include %>% 
   left_join(y=external_paths, by=c("name" = "name"))
 
-write.csv(external_genomes_II_include, file = "/Users/kellefreel/Documents/HIMB/Projects/SAR11/Freel_manu_SAR11/preprint/phylogenies/Ic_II_SAG_MAG/external_genomes_II.csv")
+write.csv(external_genomes_II_include, file = "external_genomes_II.csv")
 
 ```
 
+# Generate a phylogeny with the II genomes of interest, do this with modelfinder chosen model and WAG 
 
 ```{bash}
 
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG
+cd ~/path/to/working/directory
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_II.txt \
                                 -o II/concatenated-best_alphaproteobacteria165.fa \
@@ -369,13 +370,13 @@ trimal -in II/concatenated-best_alphaproteobacteria165.fa \
        -out II/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Started with the specific model
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s II/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 
-mkdir /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_WAG
+mkdir II_WAG
 
-cp /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II/concatenated-best_alphaproteobacteria165_out-clean.fa /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
+cp II/concatenated-best_alphaproteobacteria165_out-clean.fa II_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
 
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s II_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 ```
 
 
@@ -385,7 +386,7 @@ iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phyl
 
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG
+cd ~/path/to/working/directory
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_II_outgroup_v2.txt \
                                 -o II_outgroup_v2/concatenated-best_alphaproteobacteria165.fa \
@@ -401,23 +402,25 @@ trimal -in II_outgroup_v2/concatenated-best_alphaproteobacteria165.fa \
        -out II_outgroup_v2/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Started with the specific model
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_outgroup_v2/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T 25 --alrt 1000 -B 1000 --mem 60G
 
-mkdir /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_outgroup_v2_WAG
+mkdir II_outgroup_v2_WAG
 
-cp /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_outgroup_v2/concatenated-best_alphaproteobacteria165_out-clean.fa /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_outgroup_v2_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
+cp concatenated-best_alphaproteobacteria165_out-clean.fa concatenated-best_alphaproteobacteria165_out-clean.fa
 
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_Ic_II_MAG_SAG/II_outgroup_v2_WAG/II_outgroup_v2_WAGconcatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s II_outgroup_v2_WAGconcatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+
 ```
 
-SAR11_165_type_Ic_II_III
+# SAR11_165_type_Ic_II_III
 
 ## Updating w/ outgroup, this is a phylogeny of the type strains plus all genomes from Ic, II, and III:
+
 ```{bash}
 
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_type_Ic_II_III
+cd ~/path/to/working/directory
 
 anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_Ic_II_outgroup.txt \
                                 -o type_Ic_II_III_v1/concatenated-best_alphaproteobacteria165.fa \
@@ -433,14 +436,14 @@ trimal -in type_Ic_II_III_v1//concatenated-best_alphaproteobacteria165.fa \
        -out type_Ic_II_III_v1//concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Started with the specific model
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_type_Ic_II_III/type_Ic_II_III_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 
 # Just to be prepared (out of paranoia) also have the same tree with a general WAG model
 
-mkdir /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_type_Ic_II_III/type_Ic_II_III_v1_WAG
+mkdir type_Ic_II_III_v1_WAG
 
-cp /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_type_Ic_II_III/type_Ic_II_III_v1/concatenated-best_alphaproteobacteria165_out-clean.fa /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_type_Ic_II_III/type_Ic_II_III_v1_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
+cp type_Ic_II_III_v1/concatenated-best_alphaproteobacteria165_out-clean.fa type_Ic_II_III_v1_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa
 
-iqtree -s /tank/kfreel_data/SAR11_genomes/Freel_manu_SAR11/preprint/figures/phylogenies/SAR11_165_type_Ic_II_III/type_Ic_II_III_v1_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
+iqtree -s type_Ic_II_III_v1_WAG/concatenated-best_alphaproteobacteria165_out-clean.fa -m WAG -T AUTO -ntmax 25 --alrt 1000 -B 1000 --mem 60G
 ```
 
