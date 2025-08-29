@@ -1,0 +1,355 @@
+# NMDS Analysis 
+
+### Load relevant packages and import data
+
+import data
+
+```{r}
+#run as admin if can
+#BiocManager::install("pkimes/sigclust2")
+#devtools::install_github("nolanlab/Rclusterpp")
+
+library(here)
+library(tidyverse)
+#library(psych)
+library(plotly)
+library(vegan)
+library(ggplot2)
+library(ggplotify)
+library(sjPlot)
+library(htmlwidgets)
+#library(sigclust2)
+#library(Rclusterpp)
+#library(factoextra)
+#library(ggbiplot)
+
+#set proj dir, then restart R session
+#set_here(here("PATH/TO/FILES/"))
+
+#confirm correct path for project root, all paths relative to this one
+here()
+```
+import data
+```{r}
+sar11.info <- read.table(file = here("PATH/TO/FILES/SAR11-INFO.txt"), header = T)
+
+detection <- read.csv(file = here("PATH/TO/FILES/DETECTION.csv")) %>%  filter(metagenomes!="LEW_ERR771105_OSD14_1m")
+
+detection_t <- read.csv(file = here("PATH/TO/FILES/DETECTION.csv")) %>% 
+  filter(metagenomes!="LEW_ERR771105_OSD14_1m") %>% 
+  pivot_longer(!metagenomes, names_to = "genome", values_to = "cov") %>% 
+  pivot_wider(names_from = metagenomes, values_from = cov) %>% 
+  full_join(.,sar11.info %>% select(c("genome", "type", "sublineage")), by = "genome") %>% 
+  relocate(genome, type, sublineage) %>% filter(!if_all(everything(), ~ . == 0))
+
+clustering.in <- read.csv(here("PATH/TO/FILES/summary_mgs_main.csv")) %>% filter(!is.na(Fig2_groups))
+
+set.seed(8647)
+```
+
+Fig2-metagenomes by groups
+{vegan} - PERMANOVA & PERMDISP
+```{r}
+args(vegan:::plot.betadisper)
+
+clustering.stats <-  clustering.in  %>% 
+  #select(-X.1, -X) %>% 
+  relocate(SFig_bins, Fig2_groups, study_prefix, ocean_region_abbreviation, SFig_incl, metagenomes) %>%
+  select(metagenomes:last_col()) %>% select(-metagenomes) %>% filter(!if_all(everything(), ~ . == 0))
+
+groups <- factor(clustering.in$Fig2_groups)
+
+#can run for desired dissimilarity index
+method <- "bray"
+#method <- "jaccard"
+
+dis <- vegdist(clustering.stats, method = "bray")
+
+mod <- betadisper(dis, groups)
+plot(mod)
+plot(mod, hull = FALSE, ellipse = TRUE)
+
+## Significant PERMANOVA indicates that centroid (or spatial median) among groups is different and/or with-group dispersion among groups is different
+## PERMANOVA
+adonis.out <- adonis2(dis ~ Fig2_groups, 
+                      data = clustering.in, 
+                      parallel = parallel::detectCores()-1)
+
+adonis.out.ocean <- adonis2(dis ~ ocean_region_abbreviation, 
+                            data = clustering.in, 
+                            parallel = parallel::detectCores()-1)
+
+adonis.out
+# Permutation test for adonis under reduced model
+# Terms added sequentially (first to last)
+# Permutation: free
+# Number of permutations: 999
+# 
+# adonis2(formula = dis ~ Fig2_groups, data = clustering.in, parallel = parallel::detectCores() - 1)
+#              Df SumOfSqs      R2      F Pr(>F)    
+# Fig2_groups   3   52.330 0.65839 352.05  0.001 ***
+# Residual    548   27.152 0.34161                  
+# Total       551   79.483 1.00000
+
+adonis.out.ocean
+
+## PERMDISP betadisper function in the vegan package
+disp.out <- betadisper(dis, groups, type=c("median", "centroid"))
+anova(disp.out)
+# Analysis of Variance Table
+# 
+# Response: Distances
+#            Df Sum Sq Mean Sq F value    Pr(>F)    
+# Groups      3 1.1741 0.39138   40.55 < 2.2e-16 ***
+# Residuals 548 5.2891 0.00965  
+
+## If PERMANOVA and PERMDISP are both significant, you can use plotting to tell if PERMANOVA was significant based on centroid (or spatial median)
+plot(disp.out)
+?plot.betadisper
+
+## Would look better with higher replication for groups
+plot(disp.out, label = F)
+
+## Plot with 1 standard deviation ellipses around the group medians
+## sample size issue here, but you get the idea
+  plot(disp.out, label = T, hull = F, ellipse = T, col = c("#AD00AB", "#FF6234","#9B2D00","#338B00"))
+disp.plot.out <- ggplotify::as.ggplot(~plot(disp.out, label = T, hull = F, ellipse = T, col = c("#AD00AB", "#FF6234","#9B2D00","#338B00")))
+ggsave(here("PATH/TO/FILES/figs/disp.plot.out.svg"), plot = disp.plot.out, dpi = 1000, width = 16, height = 12, units = "cm")
+
+## Within-group dispersion that PERMDISP is testing
+boxplot(disp.out)
+
+## pairwise p-values
+TukeyHSD(disp.out)
+permutest(disp.out)
+```
+
+nicer plotting
+```{r}
+color_mapping <- c("high_latitude_low_diversity"  = "#FF6234", 
+                  "coastal_kaneohe_bay"  = "#AD00AB", 
+                  "low_latitude_low_diversity"  = "#338B00", 
+                  "low_latitude_high_diversity"  = "#9B2D00")
+
+det_pc <- prcomp(clustering.stats)
+par(mfrow=c(1, 2))
+plot(det_pc$x[, 2], det_pc$x[, 1], xlab="PC2", ylab="PC1")
+plot(det_pc$x[, 3], det_pc$x[, 1], xlab="PC3", ylab="PC1")
+summary(det_pc)$importance[2,]
+
+pca <- as.data.frame(det_pc$x)
+pca$metagenomes <- clustering.in$metagenomes #tidy this up to cbind the metadata
+pca$SFig_bins <- clustering.in$SFig_bins
+pca$Fig2_groups <- clustering.in$Fig2_groups
+
+pca.plot.out <- pca %>% ggplot() + 
+  geom_point(aes(x = PC2, y = PC1, colour = Fig2_groups)) + 
+  scale_colour_manual(values = color_mapping) +
+  ylab(paste("PCA 2 [",round(summary(det_pc)$importance[2,2]*100, 2), "%]")) +
+  xlab(paste("PCA 1 [",round(summary(det_pc)$importance[2,1]*100, 2), "%]")) + theme_classic()
+pca.plot.out
+
+ggsave(here("PATH/TO/FILES/figs/pca.plot.out.svg"), plot = pca.plot.out, dpi = 1000, width = 16, height = 12, units = "cm")
+
+
+nmds.out <- metaMDS(clustering.stats, distace = "bray")
+summary(nmds.out)
+nmds.out
+plot(nmds.out)
+
+det.scores <-  as.data.frame(scores(nmds.out)$sites)
+det.scores$metagenomes <- clustering.in$metagenomes #tidy this up to cbind the metadata
+det.scores$SFig_bins <- clustering.in$SFig_bins
+det.scores$Fig2_groups <- clustering.in$Fig2_groups 
+
+nmds.plot <- ggplot(det.scores, aes(x = NMDS1, y = NMDS2, label = metagenomes)) + 
+  geom_point(size = 2, aes(colour = Fig2_groups), alpha = .8) + 
+  scale_colour_manual(values = color_mapping) +
+  scale_shape_manual(values = shape_mapping) +
+  #geom_text(alpha=0) +
+  annotate("text", x=0, y=1, label = paste("Stress=", round(nmds.out$stress,4))) +
+  theme_classic()
+nmds.plot
+
+ggsave(here("PATH/TO/FILES/figs/nmds.svg"), plot = nmds.plot, dpi = 1000, width = 16, height = 12, units = "cm")
+
+ggplotly_to_save <- ggplotly(nmds.plot)
+
+# save
+saveWidget(widget = ggplotly(nmds.plot),
+           file = here("PATH/TO/FILES/figs/nmds.html"))
+```
+PERMANOVA & PERMDISP by sublineage
+```{r}
+args(vegan:::plot.betadisper)
+
+det.in <- detection_t
+
+det.stats.sl <-  det.in  %>%
+  select(sublineage:last_col()) %>% select(-sublineage) %>% filter(!if_all(everything(), ~ . == 0))
+
+groups.sl <- factor(det.in$sublineage)
+
+dis.sl <- vegdist(det.stats.sl, method = "bray")
+
+#can run for desired dissimilarity index
+method <- "bray"
+#method <- "jaccard"
+
+mod.sl <- betadisper(dis.sl, groups.sl)
+plot(mod.sl)
+plot(mod.sl, hull = FALSE, ellipse = TRUE)
+
+## Significant PERMANOVA indicates that centroid (or spatial median) among groups is different and/or with-group dispersion among groups is different
+## PERMANOVA
+adonis.out.sl <- adonis2(dis.sl ~ sublineage, 
+                      data = det.in, 
+                      parallel = parallel::detectCores()-1)
+
+adonis.out.sl
+# Permutation test for adonis under reduced model
+# Terms added sequentially (first to last)
+# Permutation: free
+# Number of permutations: 999
+# 
+# adonis2(formula = dis.sl ~ sublineage, data = det.in, parallel = parallel::detectCores() - 1)
+#             Df SumOfSqs      R2      F Pr(>F)    
+# sublineage  26  15.4868 0.71191 23.191  0.001 ***
+# Residual   244   6.2671 0.28809                  
+# Total      270  21.7539 1.00000  
+
+
+## PERMDISP
+disp.out.sl <- betadisper(dis.sl, groups.sl, type=c("median", "centroid"))
+anova(disp.out.sl)
+# Analysis of Variance Table
+# 
+# Response: Distances
+#            Df Sum Sq  Mean Sq F value    Pr(>F)    
+# Groups     26 2.1844 0.084017  15.871 < 2.2e-16 ***
+# Residuals 244 1.2917 0.005294 
+
+
+## If PERMANOVA and PERMDISP are both significant, you can use plotting to tell if PERMANOVA was significant based on centroid (or spatial median)
+plot(disp.out.sl)
+?plot.betadisper
+
+## Would look better with higher replication for groups
+plot(disp.out.sl, label = F)
+
+## Plot with 1 standard deviation ellipses around the group medians
+## sample size issue here, but you get the idea
+disp.plot.out.sl <- ggplotify::as.ggplot(~plot(disp.out.sl, label = T, hull = F, ellipse = T))
+ggsave(here("PATH/TO/FILES/figs/disp.plot.out.sl.svg"), plot = disp.plot.out.sl, dpi = 1000, width = 16, height = 12, units = "cm")
+## Within-group dispersion that PERMDISP is testing
+boxplot(disp.out.sl)
+
+## pairwise p-values
+tukey.out <- TukeyHSD(disp.out.sl)
+permutest(disp.out.sl)
+```
+
+
+nicer plotting.sl
+```{r}
+color_mapping.sl <- c("Ia.3.V"  = "#5e4fa2", 
+                  "Ia.3.VI"  = "#3288bd", 
+                  "Ia.3.VII"  = "#66c2a5", 
+                  "Ia.3.I"  = "#f5f5ba", 
+                  "Ia.3.IV"  = "#c1e3bc", 
+                  "Ia.4.N6"  = "#aefcce", 
+                  "Ia.4.N5"  = "#9e0142", 
+                  "Ia.4.N3"  = "#dadb84", 
+                  "Ia.4.N4"  = "#72bab4", 
+                  "Ia.4.N2"  = "#ed7b89", 
+                  "Ia.4.N1"  = "#cc4968", 
+                  "Ia.4.II"  = "#fdae61", 
+                  "Ia.3.II"  = "#f59342", 
+                  "Ia.3.III"  = "#d53e4f", 
+                  "Ia.1.I"  = "#fdae61", 
+                  "Ib.2.I"  = "#658ea8", 
+                  "Ib.N7"  = "#336c8f", 
+                  "Ib.1"  = "#8cc2b1", 
+                  "Ib.1.III"  = "#afcf91", 
+                  "Ib.N10"  = "#a9bdc9", 
+                  "Ib.3"  = "#75beeb", 
+                  "Ib.4.I"  = "#6dc290", 
+                  "Ib.4.N8"  = "#74ab8b", 
+                  "Ib.4.N9"  = "#aefcce", 
+                  "Ib.N11"  = "#c3e0bf", 
+                  "Ic"  = "#58508d", 
+                  "II"  = "#bc5090", 
+                  "III"  = "#ff6361", 
+                  "IV"  = "#ffa600")
+
+shape_mapping.sl <- c("NA" = 18, "isolate" = 16, "SAG" = 17)
+
+det_pc.sl <- prcomp(det.stats.sl)
+par(mfrow=c(1, 2))
+plot(det_pc.sl$x[, 2], det_pc.sl$x[, 1], xlab="PC2", ylab="PC1")
+plot(det_pc.sl$x[, 3], det_pc.sl$x[, 1], xlab="PC3", ylab="PC1")
+summary(det_pc.sl)$importance[2,]
+
+pca.sl <- as.data.frame(det_pc.sl$x)
+pca.sl$genome <- detection_t$genome 
+pca.sl$type <- detection_t$type
+pca.sl$sublineage <- detection_t$sublineage
+
+pca.plot.out.sl <- pca.sl %>% ggplot() + 
+  geom_point(aes(x = PC2, y = PC1, colour = sublineage, shape = type)) + 
+  scale_colour_manual(values = color_mapping.sl) +
+  scale_shape_manual(values = shape_mapping.sl) +
+  ylab(paste("PCA 2 [",round(summary(det_pc.sl)$importance[2,2]*100, 2), "%]")) +
+  xlab(paste("PCA 1 [",round(summary(det_pc.sl)$importance[2,1]*100, 2), "%]")) + theme_classic()
+pca.plot.out.sl
+ggsave(here("PATH/TO/FILES/figs/pca.plot.out.sl.svg"), plot = pca.plot.out.sl, dpi = 1000, width = 16, height = 12, units = "cm")
+
+nmds.out.sl <- metaMDS(det.stats.sl, distace = "bray")
+summary(nmds.out.sl)
+nmds.out.sl
+plot(nmds.out.sl)
+
+det.scores.sl <-  as.data.frame(scores(nmds.out.sl)$sites)
+det.scores.sl$genome <- detection_t$genome 
+det.scores.sl$type <- detection_t$type
+det.scores.sl$sublineage <- detection_t$sublineage
+
+nmds.plot.sl <- ggplot(det.scores.sl, aes(x = NMDS1, y = NMDS2, label = genome)) + 
+  geom_point(size = 2, aes(colour = sublineage, shape = type), alpha = 0.8) + 
+  scale_colour_manual(values = color_mapping.sl) +
+  scale_shape_manual(values = shape_mapping.sl) +
+  #geom_text(alpha=0) +
+  annotate("text", x=-2.5, y=1.5, label = paste("Stress=", round(nmds.out.sl$stress,4))) +
+  theme_classic()
+nmds.plot.sl
+
+ggsave(here("PATH/TO/FILES/figs/nmds_sl.svg"), plot = nmds.plot.sl, dpi = 1000, width = 16, height = 12, units = "cm")
+
+ggplotly_to_save <- ggplotly(nmds.plot.sl)
+
+# save
+saveWidget(widget = ggplotly(nmds.plot.sl),
+           file = here("PATH/TO/FILES/figs/nmds_sl.html"))
+```
+
+
+plot extras
+```{r}
+color.by.n <- read.csv(here("PATH/TO/FILES/key_mgs_sum_for_evan.csv"))
+
+color.by.n %>% arrange(Fig_bin_correlate_order) %>% mutate(mock.y=rep(1,nrow(color.by.n))) %>% 
+  ggplot() + geom_col(aes(x=Fig_bin_correlate_order, y = mock.y, fill = number_of_metagenomes))
+
+color.by.n %>% arrange(Fig_bin_correlate_order) %>% mutate(mock.y=rep(1,nrow(color.by.n))) %>% 
+  ggplot() + geom_col(aes(x=Fig_bin_correlate_order, 
+                            y = mock.y, 
+                            fill = number_of_metagenomes)) + 
+  scale_fill_gradientn(colors = c("#aefcce", "#9e0142"), 
+                          breaks = c(0,10,20,30),
+                          limits = c(0,30),
+                          na.value = "#9e0142",
+                          labels = c(0,10,20,">30")) + 
+  labs(fill = "# Metagenomes") + 
+  expand_limits(y = length(color.by.n$Fig_bin_correlate_order)) +
+  theme_classic() #+ guides(colour="none", size = none)
+```
