@@ -267,13 +267,6 @@ LSUCC0530	isolate	III
 NP1	isolate	Ia.1.I
 RS39	isolate	Ia.4.N5
 RS40	isolate	Ib.1
-GCA_000421265	isolate	outgroup
-GCA_000513295	isolate	outgroup
-GCA_000688235	isolate	outgroup
-GCA_000968135	isolate	outgroup
-GCA_014672695	isolate	outgroup
-GCA_021555045	isolate	outgroup
-GCA_026163695	isolate	outgroup
-GCA_027864655	isolate	outgroup
-GCA_029318635	isolate	outgroup
-GCA_902725215	isolate	outgroup
+LSUCC0261	isolate	III
+LSUCC0664	isolate	III
+LSUCC0723	isolate	III
