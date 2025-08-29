@@ -1,0 +1,38 @@
+
+minimal ancestor deviation (MAD) method of rooting phylogenies 
+
+
+
+```{bash}
+
+# First get the program downloaded
+
+git clone --recursive https://github.com/davidjamesbryant/MADroot.git
+
+# Citation: Tria, F. D. K., Landan, G., and Dagan, T. (2017). Phylogenetic rooting using minimal ancestor deviation. Nature Ecology and Evolution, 1, 0193.
+
+# Then go into the directory and run things there
+cd MADroot
+
+# Now run this for the Pseudomonadales outgroup
+
+./madRoot /path/to/files/concat_511_pseudomonadales_outgroup/pseudomonadales_511_concatenated-best_alphaproteobacteria165-clean.fa.treefile > /path/to/files/concat_511_pseudomonadales_outgroup/MADroot/mad-rooted_pseudomonadales_511_concatenated-best_alphaproteobacteria165-clean.fa.treefile
+
+# Also run for the broad outgroup (same command listed below when trying with imported tree)
+
+./madRoot /path/to/files/broad_511_concatenated-best_alphaproteobacteria165-clean/broad_unrooted.newick > /path/to/files/broad_511_concatenated-best_alphaproteobacteria165-clean/MADroot/mad-rooted_broad_unrooted.newick
+
+# Also run for the original outgroup
+
+./madRoot /path/to/files/concat_511_initial_outgroup/initial_511_concatenated-best_alphaproteobacteria165-clean.fa.treefile > /path/to/files/concat_511_initial_outgroup/MADroot/mad-rooted_original_unrooted.newick
+
+# What happens when we run this baby with no outgroup (but SAR11 V and IV are included)
+
+./madRoot /path/to/files/no_outgroup_511_concatenated-best_alphaproteobacteria165-clean.fa/no_outgroup_511_concatenated-best_alphaproteobacteria165-clean.fa.treefile > /path/to/files/no_outgroup_511_concatenated-best_alphaproteobacteria165-clean.fa/MADroot/mad-rooted_no_outgroup_unrooted.newick
+
+# Also run for the broad outgroup 
+
+./madRoot /path/to/files/broad_511_concatenated-best_alphaproteobacteria165-clean/broad_unrooted.newick > /path/to/files/broad_511_concatenated-best_alphaproteobacteria165-clean/MADroot/mad-rooted_broad_unrooted.newick
+
+```
+
