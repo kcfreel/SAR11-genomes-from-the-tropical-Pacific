@@ -6,19 +6,19 @@
 ### Make a folder with all of the genomes for recruitment
 ```{r}
 
-# From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 268 representatives
-genomes_to_recruit_268 <- read.delim("~/path/to/working/directory/global_read_recruitment/genomes_to_recruit.txt", stringsAsFactors = FALSE)
+# From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 271 representatives
+genomes_to_recruit_271 <- read.delim("~/path/to/working/directory/global_read_recruitment/genomes_to_recruit.txt", stringsAsFactors = FALSE)
 
 # And then import the paths of all the genomes
-# From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 268 representatives
+# From the main list of genomes and what is to be included from read recruitment, make a tab delimited file with 271 representatives
 paths_genomes_all_genomes <- read.csv("~/path/to/working/directory/tables/complete_genome_set/504_isolates_SAGS_revised_16Oct24.csv", stringsAsFactors = FALSE)
 
-genomes_to_recruit_268_with_paths <- left_join(genomes_to_recruit_268, paths_genomes_all_genomes, by = c("accession"))
+genomes_to_recruit_271_with_paths <- left_join(genomes_to_recruit_271, paths_genomes_all_genomes, by = c("accession"))
 
-write.csv(genomes_to_recruit_268_with_paths, file = "~/path/to/working/directory/global_read_recruitment/genomes_to_recruit_268_with_paths.csv")
+write.csv(genomes_to_recruit_271_with_paths, file = "~/path/to/working/directory/global_read_recruitment/genomes_to_recruit_271_with_paths.csv")
 
-        # Copied all of the 268 genome files into a folder for read recruitment:
-        #      ~/path/to/working/directory/genomes_268 with command "copy_command_genomes_268.txt"
+        # Copied all of the 271 genome files into a folder for read recruitment:
+        #      ~/path/to/working/directory/genomes_271 with command "copy_command_genomes_271.txt"
         
 ```
 
@@ -35,8 +35,8 @@ cd ~/path/to/working/directory
 export project="SAR11_mapping"
 
 mkdir SAR11_mapping
-mkdir genomes_268/RENAME
-cd genomes_268
+mkdir genomes_271/RENAME
+cd genomes_271
 
 for i in *.fa
 do
@@ -50,10 +50,10 @@ done
 
 # Generation of collections-txt file
 
-for i in genomes_268/RENAME/*fa
+for i in genomes_271/RENAME/*fa
 do
     genome_name=`basename $i | awk 'BEGIN{FS=".fa"}{print $1}'`
-    for c in `grep '>' genomes_268/RENAME/$genome_name.fa`
+    for c in `grep '>' genomes_271/RENAME/$genome_name.fa`
     do
         echo -e "${c:1}\t$genome_name"
     done
@@ -61,7 +61,7 @@ done > SAR11_mapping/collection.txt
 
 
 # Concatenate genomes into a single file 
-cat genomes_268/RENAME/*.fa > SAR11_mapping/SAR11.fa
+cat genomes_271/RENAME/*.fa > SAR11_mapping/SAR11.fa
 
 # Generate a fasta-txt file
 
@@ -128,10 +128,9 @@ anvi-summarize -c 03_CONTIGS/SAR11_mapping-contigs.db \
 ```
 
 # K-means clustering
+# Information for running this is all included in the clustering directory 
 
 This is set up to run with custom script to be used in the anvi'o developer's version
-
-## Meren's instructions
 
 If you just would like to run everything from scratch,
 use the following command in an anvi'o dev environment:
