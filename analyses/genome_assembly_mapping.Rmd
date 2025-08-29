@@ -1,0 +1,137 @@
+Generating BAM files for all of the 81 new SAR11 genomes 
+
+# Assembly with Unicycler https://github.com/rrwick/Unicycler
+#######Running Unicycler#######-------------------------------------------------
+```{bash}
+
+if test -n "$(find ./raw -maxdepth 1 -name '*R2*' -print -quit)"; then
+    echo reverse reads found. proceeding with paired end assembly
+    #setspades.R
+    echo "if (\"here\" %in% row.names(installed.packages())){" > spades_yaml.R
+    echo "library(here)" >> spades_yaml.R
+    echo "}  else {" >> spades_yaml.R
+    echo "install.packages(\"here\")" >> spades_yaml.R
+    echo "library(here)}" >> spades_yaml.R
+    echo "workingdir <- paste0(here(),\"/\")" >> spades_yaml.R
+    echo "fwds <- read.table(paste0(workingdir,\"/fwds\"))" >> spades_yaml.R
+    echo "revs <- read.table(paste0(workingdir,\"/revs\"))" >> spades_yaml.R
+    echo "setwd(workingdir)" >> spades_yaml.R
+    echo "write(paste0('[ \n',  '   { \n', '     orientation: \"fr\", \n', '     type: \"paired-end\", \n', '     right reads: ['), file = \"libraries.yaml\", append = F)" >> spades_yaml.R
+    echo "for(i in 1:nrow(fwds)){write(paste0('       \"',fwds[i,1],'\",'), file = \"libraries.yaml\", append = T)}" >> spades_yaml.R
+    echo "write(paste0('       ], \n', '       left reads: ['), file = \"libraries.yaml\", append = T)" >> spades_yaml.R
+    echo "for(i in 1:nrow(revs)){write(paste0('       \"',revs[i,1],'\",'), file = \"libraries.yaml\", append = T)}" >> spades_yaml.R                   
+    echo "write(paste0('       ] \n', '   } \n', ']'), file = \"libraries.yaml\", append = T)" >> spades_yaml.R
+
+    chmod 755 spades_yaml.R
+    Rscript spades_yaml.R
+
+    #paired-end assembly
+    spades.py --dataset libraries.yaml -k "${USR_KMER[@]}" --careful $NUMPROC -m $MEMORY -o ./assembly/$PROJ_usr_kmer
+    spades.py --dataset libraries.yaml --careful -t $NUMPROC -m $MEMORY -o ./assembly/$PROJ_default_kmer
+else
+    echo no reverse reads found. proceeding with single end assebmly
+    #single end assembly
+    pools=(` find ./trimming -name "*R1*.gz" | sort | uniq | cat `) 
+    libnum=( `seq 1 "${#pools[@]}"` )
+    libnum=("${libnum[@]/#/--s}")
+    unset reads
+    for (( i=0; i<${#libnum[*]}; ++i)); do reads+=( ${libnum[$i]} ${pools[$i]} ); done
+    #kmers="$(seq -s ',' 21 2 127)"
+    #spades.py "${reads[@]}" -k "$kmers" --careful -t $NUMPROC -m $MEMORY -o ./assembly/ipyRAD_all_kmer_output
+
+    spades.py "${reads[@]}" -k "${USR_KMER[@]}" --careful -t $NUMPROC -m $MEMORY -o ./assembly/${PROJ}usr_kmer
+    spades.py "${reads[@]}" --careful -t $NUMPROC -m $MEMORY -o ./assembly/${PROJ}_default_kmer
+fi
+
+
+
+
+```
+
+
+# Running Unicycler 
+
+```{bash}
+
+
+
+#define desired total number of cores to use
+NUMPROC=30
+MEMORY=300
+SPLITSa=4
+
+#set project path
+PROJ=${PWD##*/}
+#USR_KMER="71,81,91,99,121,127"
+
+parallel --dryrun -j $SPLITSa unicycler -1 {1} -2 {2} -o ./unicycler/{3} -t $(( $NUMPROC / $SPLITSa )) ::: \
+    ` find ./trimming -name "*val_1*.gz" | sort | uniq ` :::+ \
+    ` find ./trimming -name "*val_2*.gz" | sort | uniq ` :::+ \
+    ` find ./trimming -name "*val_1*.gz" | sort | uniq | cut -d "/" -f3 | cut -d "_" -f1 `
+
+#copy over contig outputs for 
+parallel -j $NUMPROC cp ./unicycler/{}/assembly.fasta ./quast/unicycler/{}_unicycler.fasta ::: \
+` find ./unicycler -maxdepth 1 -type d | sort | uniq | cut -d "/" -f3 `
+
+all_default=(` find ./quast/unicycler/*.fasta  -type f `)
+
+quast.py --gene-finding -b -t $NUMPROC -m $MEMORY "${all_default[@]}" -o ./quast/unicycler/  
+
+#########STOP######-----------------------------------------------------------
+#before proceeding: evaluate your quast results. Choose desired de novo, copy to ./assemly with a name to include *chosen.fasta
+
+parallel --dryrun -j 3 unicycler -1 ./trimming/HIMB1402_S48_R1_001_val_1.fq.gz -2 ./trimming/HIMB1402_S48_R2_001_val_2.fq.gz -o ./unicycler/HIMB1402 -t {} ::: 7 10 15
+
+```
+
+```{bash}
+# Latest round of cleaned genomes moved to fasta_medusa_v3 but then for the sake of being able to visualize if needed in anvio, mapping was done on all of the 'fixed fasta strains'
+
+cd /tank/kfreel_data/SAR11_genomes/01_Feb_2024_fixed_fasta_index_final
+
+parallel -j 25 bowtie2-build {} {/.} ::: \
+` find /path/to/files/fixed_fasta_Feb_2024_HTC17_HTC18 -name "*.fa" `
+
+cd /tank/kfreel_data/SAR11_genomes/
+
+parallel -j 10 \
+  bowtie2 -x /tank/kfreel_data/SAR11_genomes/01_Feb_2024_fixed_fasta_index_final/{3}_fixed_final \
+          -1 {1} \
+          -2 {2} \
+          -p 3 \
+          -S ./04_MAPPING_Feb_2024_fixed_final/{3}.sam ::: \
+         ` find /tank/kfreel_data/SAR11_genomes/MiGS/trimming_master/trimming_original -name "*val_1*" | sort ` :::+ \
+         ` find /tank/kfreel_data/SAR11_genomes/MiGS/trimming_master/trimming_original -name "*val_2*" | sort ` :::+ \
+         ` find /path/to/files/fixed_fasta_Feb_2024_HTC17_HTC18 -name "*.fa" | sort | cut -d "/" -f8 | cut -d "_" -f1 `
+
+# First view
+parallel -j 10 samtools view -@ 3 -F 4 -bS ./04_MAPPING_Feb_2024_fixed_final/{1/.}.sam -o ./04_MAPPING_Feb_2024_fixed_final/{1/.}-RAW.bam ::: \
+    ` find ./04_MAPPING_Feb_2024_fixed_final -name "*.sam" -not -name "*sort*" `
+    
+# Then sort 
+parallel -j 3 samtools sort -@ 10 -O BAM -o ./04_MAPPING_Feb_2024_fixed_final/{1/.}.sort.bam ./04_MAPPING_Feb_2024_fixed_final/{1/.}-RAW.bam ::: \
+    ` find ./04_MAPPING_Feb_2024_fixed_final -name "*-RAW.bam" -not -name "*sort*" | sed 's/-RAW//' `
+    
+# Finally index
+parallel -j 12 samtools index {} ::: \
+    ` find ./04_MAPPING_Feb_2024_fixed_final -name "*sort.bam" `
+    
+# Remove all the temporary files
+rm *-RAW.bam
+rm *.sam
+
+# Example for individual genomes
+
+bowtie2-build /path/to/fasta/HIMB1412.fasta /path/to/index/HIMB1412
+
+bowtie2 -x /path/to/index/HIMB1412 \
+        -1 ./trimming_master/trimming_original/HIMB1412_S1_R1_001_val_1.fq.gz \
+        -2 ./trimming_master/trimming_original/HIMB1412_S1_R2_001_val_2.fq.gz \
+        -p 20 \
+        -S ./anvio_unicycler/anvio_unicycler_bowtie2/04_MAPPING_medusa_v3/HIMB1412.sam
+
+samtools view -b -S HIMB1412.sam -o HIMB1412-RAW.bam
+samtools sort HIMB1412-RAW.bam -o HIMB1412.bam
+samtools index HIMB1412.bam 
+
+````
