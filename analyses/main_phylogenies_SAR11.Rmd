@@ -5,20 +5,20 @@
 ### Prepare the external-genomes.txt file
 
 ```{r}
-# Remove the identified IV and V genomes from the "external_genomes_504_set_outgroup_v3.txt" file
+# Remove the identified IV and V genomes from the "external_genomes.txt" file
 
 setwd ("~/path/to/working/directory/phylogeny_prep")
 
 # First read in the appropriate old file
-external_genomes_504_set_outgroup_v3 <- read.delim("external_genomes_504_set_outgroup_v3.txt", stringsAsFactors = FALSE)
+external_genomes <- read.delim("external_genomes.txt", stringsAsFactors = FALSE)
 
 IV_V_remove <- read.delim("IV_and_V_remove_481.txt", stringsAsFactors = FALSE)
 
 # This is one way to remove, BUT the names in the columns must be IDENTICAL, and I realized something was wrong so couldn't use this
-# external_genomes_484_set_outgroup_v1 <- anti_join(external_genomes_504_set_outgroup_v3, IV_V_remove, by = c("name"))
+# external_genomes_484_set_outgroup_v1 <- anti_join(external_genomes, IV_V_remove, by = c("name"))
 
 # This is another way to remove, if only some of the characters are the same
-external_genomes_484_set_outgroup_v1 <- external_genomes_504_set_outgroup_v3 %>%
+external_genomes_484_set_outgroup_v1 <- external_genomes %>%
   filter(!sapply(name, function(x) any(str_starts(x, IV_V_remove$name))))
 
 write.csv(external_genomes_481_set_outgroup_v1, file = "external_genomes_481_set_outgroup_v1.csv")
@@ -32,9 +32,9 @@ write.csv(external_genomes_481_set_outgroup_v1, file = "external_genomes_481_set
 ```{bash}
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
-cd ~/path/to/working/directory/phylogenies/SAR11_165_504_outgroup
+cd ~/path/to/working/directory/phylogenies/SAR11_165_outgroup
 
-anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_481_set_outgroup_v1.csv \
+anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_484_set_outgroup_v1.csv \
                                 -o concatenated_genes_v2_excl_IV_V/concatenated-best_alphaproteobacteria165.fa \
                                 --hmm-sources Alphaproteobacterial_SCGs \
                                 --gene-names acpS,acyl_carrier_protein,afg1_family_ATPase,alpha_beta_hydrolase_fold,ApbC,aspS,ATP_synthase_F0_sub_a,atpG,Beta_lactamase_like_protein,BolA_family_protein,ccmC,ccmE,cell_division_trigger_factor,coaD,coaE,copper_homeostasis,cytidylate_kinase,cytochrome_oxidase_assembly,dapD,delta_AAD,DNA_polymerase_I,DnaA,dnaA,dut_deoxyuridine_TN,eno_hydratase,exonuclease,fabZ,folylpolyglutamate_synth,fpg,frr,gatB,gidA,gidB,glyS,gpsA,grla,GrpE,grxC,hemE,heme_chaperone,Holliday_junction_resolvase_like,HslV,hydrolase_TatD_family,hypothetical_protein_01,hypothetical_protein_02,hypothetical_protein_03,hypothetical_protein_04,hypothetical_protein_05,hypothetical_protein_06,hypothetical_protein_07,hypothetical_protein_08,hypothetical_protein_09,hypothetical_protein_12,hypothetical_protein_14,infC,iojap_protein_family,ksgA,lipoate_protein_ligase_B,lipoyl_synthase,maf,malate_dehydrogenase,mesJ,metallo_beta_lactamase,methylase,miaA,mnmA,MraW,murF,murG,nifR3_TIM,NifU,nucleoside_diphosphate_kinase,nuoJ,nuoK2,nusA,nusG,parvulin_like_PPI,PDT,peptidyl_tRNA_hydrolase,pgk_phosphoglycerate_kinase,pgsA,phage_SPO1_related,pheT,phospho_N_APT,plsX,polyA_polymerase,porphobilinogen_deaminase,protein_S6,putative_DNA_binding,putative_zinc_metallo,pyrG,quinone_oxi,recA,recombination_protein_RecR,Ribonuclease_3,ribonuclease_E,ribosomal_protein_L1,ribosomal_protein_L11,ribosomal_protein_L13,ribosomal_protein_L14,ribosomal_protein_L15,ribosomal_protein_L17,ribosomal_protein_L18,ribosomal_protein_L19,ribosomal_protein_L2,ribosomal_protein_L21,ribosomal_protein_L22,ribosomal_protein_L23,ribosomal_protein_L24,ribosomal_protein_L27,ribosomal_protein_L28,ribosomal_protein_L3,ribosomal_protein_L4,ribosomal_protein_L5,ribosomal_protein_L6,ribosomal_protein_L9,ribosomal_protein_S10,ribosomal_protein_S11,ribosomal_protein_S12,ribosomal_protein_S13,ribosomal_protein_S14,ribosomal_protein_S15,ribosomal_protein_S16,ribosomal_protein_S17,ribosomal_protein_S18,ribosomal_protein_S19,ribosomal_protein_S2,ribosomal_protein_S20,ribosomal_protein_S3,ribosomal_protein_S4,ribosomal_protein_S5,ribosomal_protein_S7,ribosomal_protein_S8,ribosomal_protein_S9,Ribosome_binding_factor_A,RNA_polymerase_sub_a,rnhB,rplT,rrm1,rRNA_LS_methyltransferase,sdhC_556_sub,secY,serS,smpB,sucA,tatc,tetrapyrrole_methylase,tgt,Tim44,tmk,tolB,transcriptional_regulator,TraR,trmD,trmE,tRNA_guanine_N7_MT,truA,tryptophanyl_tRNA_synth,ubiA,ubiE,UDP_N_AEPG_reductase,UDP_N_AGPPlase,uvrC,YajC,YidC \
@@ -55,7 +55,7 @@ iqtree -s concatenated_genes_v2_actually_exl_IV/concatenated-best_alphaproteobac
 
 ```
 
-# Pruned phylogeny (268 SAR11 genomes)
+# Pruned phylogeny (271 SAR11 genomes)
 
 ### Generate the external_genomes file without the dereplicated genomes, and other SAGs with ANI values <90% to their closest related genome 
 
@@ -68,26 +68,26 @@ library(dplyr)
 external_genomes_484_set_outgroup_v1 <- read.csv("external_genomes_484_set_outgroup_v1.csv", stringsAsFactors = FALSE)
 
 # Now read in the file with the genomes to retain 
-final_SAR11_268 <- read.delim("final_SAR11_269_name.txt", stringsAsFactors = FALSE)
+final_SAR11_271 <- read.delim("final_SAR11_269_name.txt", stringsAsFactors = FALSE)
 
-# Now add the file paths to the final_SAR11_268 file to make a phylogeny
-external_genomes_268_set <- left_join(final_SAR11_268, external_genomes_484_set_outgroup_v1, by = c("name"))
+# Now add the file paths to the final_SAR11_271 file to make a phylogeny
+external_genomes_271_set <- left_join(final_SAR11_271, external_genomes_484_set_outgroup_v1, by = c("name"))
 
-write.csv(external_genomes_268_set, file = "external_genomes_268_set.csv")
+write.csv(external_genomes_271_set, file = "external_genomes_271_set.csv")
 
 # Now add the outgroup and the path to the outgroup
 
 ```
 
-### Make a tree for the 268
+### Make a tree for the 271
 
 ```{bash}
 # Make an external-genomes.txt file that has all of the genomes and the paths to the contigs.db of interest
 
 cd ~/path/to/working/directory
 
-anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_268_set_outgroup_v1.txt \
-                                -o concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165.fa \
+anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_271_set_outgroup_v1.txt \
+                                -o concatenated_genes_271_v1/concatenated-best_alphaproteobacteria165.fa \
                                 --hmm-sources Alphaproteobacterial_SCGs \
                                 --gene-names acpS,acyl_carrier_protein,afg1_family_ATPase,alpha_beta_hydrolase_fold,ApbC,aspS,ATP_synthase_F0_sub_a,atpG,Beta_lactamase_like_protein,BolA_family_protein,ccmC,ccmE,cell_division_trigger_factor,coaD,coaE,copper_homeostasis,cytidylate_kinase,cytochrome_oxidase_assembly,dapD,delta_AAD,DNA_polymerase_I,DnaA,dnaA,dut_deoxyuridine_TN,eno_hydratase,exonuclease,fabZ,folylpolyglutamate_synth,fpg,frr,gatB,gidA,gidB,glyS,gpsA,grla,GrpE,grxC,hemE,heme_chaperone,Holliday_junction_resolvase_like,HslV,hydrolase_TatD_family,hypothetical_protein_01,hypothetical_protein_02,hypothetical_protein_03,hypothetical_protein_04,hypothetical_protein_05,hypothetical_protein_06,hypothetical_protein_07,hypothetical_protein_08,hypothetical_protein_09,hypothetical_protein_12,hypothetical_protein_14,infC,iojap_protein_family,ksgA,lipoate_protein_ligase_B,lipoyl_synthase,maf,malate_dehydrogenase,mesJ,metallo_beta_lactamase,methylase,miaA,mnmA,MraW,murF,murG,nifR3_TIM,NifU,nucleoside_diphosphate_kinase,nuoJ,nuoK2,nusA,nusG,parvulin_like_PPI,PDT,peptidyl_tRNA_hydrolase,pgk_phosphoglycerate_kinase,pgsA,phage_SPO1_related,pheT,phospho_N_APT,plsX,polyA_polymerase,porphobilinogen_deaminase,protein_S6,putative_DNA_binding,putative_zinc_metallo,pyrG,quinone_oxi,recA,recombination_protein_RecR,Ribonuclease_3,ribonuclease_E,ribosomal_protein_L1,ribosomal_protein_L11,ribosomal_protein_L13,ribosomal_protein_L14,ribosomal_protein_L15,ribosomal_protein_L17,ribosomal_protein_L18,ribosomal_protein_L19,ribosomal_protein_L2,ribosomal_protein_L21,ribosomal_protein_L22,ribosomal_protein_L23,ribosomal_protein_L24,ribosomal_protein_L27,ribosomal_protein_L28,ribosomal_protein_L3,ribosomal_protein_L4,ribosomal_protein_L5,ribosomal_protein_L6,ribosomal_protein_L9,ribosomal_protein_S10,ribosomal_protein_S11,ribosomal_protein_S12,ribosomal_protein_S13,ribosomal_protein_S14,ribosomal_protein_S15,ribosomal_protein_S16,ribosomal_protein_S17,ribosomal_protein_S18,ribosomal_protein_S19,ribosomal_protein_S2,ribosomal_protein_S20,ribosomal_protein_S3,ribosomal_protein_S4,ribosomal_protein_S5,ribosomal_protein_S7,ribosomal_protein_S8,ribosomal_protein_S9,Ribosome_binding_factor_A,RNA_polymerase_sub_a,rnhB,rplT,rrm1,rRNA_LS_methyltransferase,sdhC_556_sub,secY,serS,smpB,sucA,tatc,tetrapyrrole_methylase,tgt,Tim44,tmk,tolB,transcriptional_regulator,TraR,trmD,trmE,tRNA_guanine_N7_MT,truA,tryptophanyl_tRNA_synth,ubiA,ubiE,UDP_N_AEPG_reductase,UDP_N_AGPPlase,uvrC,YajC,YidC \
                                 --return-best-hit \
@@ -96,11 +96,11 @@ anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_268_set_outg
                                 
 # Use trimAL to remove all positions that are missing from more than 50% of the sequences 
 
-trimal -in concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165.fa \
-       -out concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
+trimal -in concatenated_genes_271_v1/concatenated-best_alphaproteobacteria165.fa \
+       -out concatenated_genes_271_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Run the tree in IQtree
-iqtree -s concatenated_genes_268_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 10 --alrt 1000 -B 1000 --mem 60G
+iqtree -s concatenated_genes_271_v1/concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 10 --alrt 1000 -B 1000 --mem 60G
 
 ```
 
@@ -112,8 +112,8 @@ Will be updating the name of the external genomes file to "v2"
 
 cd ~/path/to/working/directory
 
-anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_268_set_outgroup_v2.txt \
-                                -o concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165.fa \
+anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_271_set_outgroup_v2.txt \
+                                -o concatenated_genes_271_v2/concatenated-best_alphaproteobacteria165.fa \
                                 --hmm-sources Alphaproteobacterial_SCGs \
                                 --gene-names acpS,acyl_carrier_protein,afg1_family_ATPase,alpha_beta_hydrolase_fold,ApbC,aspS,ATP_synthase_F0_sub_a,atpG,Beta_lactamase_like_protein,BolA_family_protein,ccmC,ccmE,cell_division_trigger_factor,coaD,coaE,copper_homeostasis,cytidylate_kinase,cytochrome_oxidase_assembly,dapD,delta_AAD,DNA_polymerase_I,DnaA,dnaA,dut_deoxyuridine_TN,eno_hydratase,exonuclease,fabZ,folylpolyglutamate_synth,fpg,frr,gatB,gidA,gidB,glyS,gpsA,grla,GrpE,grxC,hemE,heme_chaperone,Holliday_junction_resolvase_like,HslV,hydrolase_TatD_family,hypothetical_protein_01,hypothetical_protein_02,hypothetical_protein_03,hypothetical_protein_04,hypothetical_protein_05,hypothetical_protein_06,hypothetical_protein_07,hypothetical_protein_08,hypothetical_protein_09,hypothetical_protein_12,hypothetical_protein_14,infC,iojap_protein_family,ksgA,lipoate_protein_ligase_B,lipoyl_synthase,maf,malate_dehydrogenase,mesJ,metallo_beta_lactamase,methylase,miaA,mnmA,MraW,murF,murG,nifR3_TIM,NifU,nucleoside_diphosphate_kinase,nuoJ,nuoK2,nusA,nusG,parvulin_like_PPI,PDT,peptidyl_tRNA_hydrolase,pgk_phosphoglycerate_kinase,pgsA,phage_SPO1_related,pheT,phospho_N_APT,plsX,polyA_polymerase,porphobilinogen_deaminase,protein_S6,putative_DNA_binding,putative_zinc_metallo,pyrG,quinone_oxi,recA,recombination_protein_RecR,Ribonuclease_3,ribonuclease_E,ribosomal_protein_L1,ribosomal_protein_L11,ribosomal_protein_L13,ribosomal_protein_L14,ribosomal_protein_L15,ribosomal_protein_L17,ribosomal_protein_L18,ribosomal_protein_L19,ribosomal_protein_L2,ribosomal_protein_L21,ribosomal_protein_L22,ribosomal_protein_L23,ribosomal_protein_L24,ribosomal_protein_L27,ribosomal_protein_L28,ribosomal_protein_L3,ribosomal_protein_L4,ribosomal_protein_L5,ribosomal_protein_L6,ribosomal_protein_L9,ribosomal_protein_S10,ribosomal_protein_S11,ribosomal_protein_S12,ribosomal_protein_S13,ribosomal_protein_S14,ribosomal_protein_S15,ribosomal_protein_S16,ribosomal_protein_S17,ribosomal_protein_S18,ribosomal_protein_S19,ribosomal_protein_S2,ribosomal_protein_S20,ribosomal_protein_S3,ribosomal_protein_S4,ribosomal_protein_S5,ribosomal_protein_S7,ribosomal_protein_S8,ribosomal_protein_S9,Ribosome_binding_factor_A,RNA_polymerase_sub_a,rnhB,rplT,rrm1,rRNA_LS_methyltransferase,sdhC_556_sub,secY,serS,smpB,sucA,tatc,tetrapyrrole_methylase,tgt,Tim44,tmk,tolB,transcriptional_regulator,TraR,trmD,trmE,tRNA_guanine_N7_MT,truA,tryptophanyl_tRNA_synth,ubiA,ubiE,UDP_N_AEPG_reductase,UDP_N_AGPPlase,uvrC,YajC,YidC \
                                 --return-best-hit \
@@ -122,8 +122,8 @@ anvi-get-sequences-for-hmm-hits --external-genomes external_genomes_268_set_outg
 
 # Use trimAL to remove all positions that are missing from more than 50% of the sequences 
 
-trimal -in concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165.fa \
-       -out concatenated_genes_268_v2/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
+trimal -in concatenated_genes_271_v2/concatenated-best_alphaproteobacteria165.fa \
+       -out concatenated_genes_271_v2/concatenated-best_alphaproteobacteria165_out-clean.fa -gt 0.50
 
 # Restart the tree
 iqtree -s concatenated-best_alphaproteobacteria165_out-clean.fa -m LG+F+R10 -T AUTO -ntmax 35 --alrt 1000 -B 1000 --mem 60G
@@ -175,7 +175,7 @@ anvi-import-collection -C collection_genera \
 ```
 
 
-### 268 genomes
+### 271 genomes
 
 Prepare the layers file for the succinct tree, using the layers file already generated for the 481 genomes
 
@@ -186,15 +186,15 @@ cd ~/path/to/working/directory
 # import the layers from the 481
 LAYERS_SAR11_481_v1 <- read.delim("LAYERS_SAR11_481_v1.txt", stringsAsFactors = FALSE)
 
-# now import the list of the 268 
-set_268 <- read.delim("genomes_268_set.txt", stringsAsFactors = FALSE)
+# now import the list of the 271 
+set_271 <- read.delim("genomes_271_set.txt", stringsAsFactors = FALSE)
 
 # JOIN these sweet baby angels
 
-LAYERS_SAR11_268_v1 <- left_join(set_268, LAYERS_SAR11_481_v1, by = c("genome"))
+LAYERS_SAR11_271_v1 <- left_join(set_271, LAYERS_SAR11_481_v1, by = c("genome"))
 
 # write the file
-write_delim(LAYERS_SAR11_268_v1, file="LAYERS_SAR11_268_v1.txt")
+write_delim(LAYERS_SAR11_271_v1, file="LAYERS_SAR11_271_v1.txt")
 
 # At this point, sort the table by subgroup and check a type genome has been chosen for each one 
 # Also finalize the number of genera defined here
@@ -207,16 +207,16 @@ write_delim(LAYERS_SAR11_268_v1, file="LAYERS_SAR11_268_v1.txt")
 
 # This is for the pruned tree 
 
-anvi-interactive -p SAR11_268_v1.db \
+anvi-interactive -p SAR11_271_v1.db \
                  -d LAYERS/layers_test_v3.txt \
                  -t concatenated-best_alphaproteobacteria165_out-clean.fa.contree \
-                 --title "SAR11_268_v1" \
+                 --title "SAR11_271_v1" \
                  --manual
                  
 anvi-import-collection -C collection_genera \
-                        -p SAR11_268_v1.db \
+                        -p SAR11_271_v1.db \
                         --bins-info bin_color_info_v1.txt \
-                        collection_genera_268_v2.txt
+                        collection_genera_271_v2.txt
 
 ```
 
@@ -226,36 +226,36 @@ anvi-import-collection -C collection_genera \
 # This is for the succinct tree with HIMB1556 vs HIMB140
 cd ~/path/to/working/directory
 
-anvi-interactive -p SAR11_268_v2.db \
-                 -d LAYERS/LAYERS_SAR11_268_v4.txt \
+anvi-interactive -p SAR11_271_v2.db \
+                 -d LAYERS/LAYERS_SAR11_271_v4.txt \
                  -t concatenated-best_alphaproteobacteria165_out-clean.fa.contree \
-                 --title "SAR11_268_v2" \
+                 --title "SAR11_271_v2" \
                  --manual
                  
 anvi-import-collection -C collection_genera \
-                        -p SAR11_268_v2.db \
+                        -p SAR11_271_v2.db \
                         --bins-info bin_color_info_v2.txt \
                         collection_genera_v1.txt
                         
                         
         # Adding a new column that is 'old genome, old HIMB genome or new HIMB genome' for the final phylogeny
 
-anvi-interactive -p SAR11_268_v2.db \
-                 -d LAYERS/LAYERS_SAR11_268_v5.txt \
+anvi-interactive -p SAR11_271_v2.db \
+                 -d LAYERS/LAYERS_SAR11_271_v5.txt \
                  -t concatenated-best_alphaproteobacteria165_out-clean.fa.contree \
-                 --title "SAR11_268_v2" \
+                 --title "SAR11_271_v2" \
                  --manual     
 
 ## Adding detection values to re-make a figure for supplemental reasons   
-mkdir concatenated_genes_268_v2_avedetection
+mkdir concatenated_genes_271_v2_avedetection
 # put relevant files in there
 
-cd ~/concatenated_genes_268_v2_avedetection
+cd ~/concatenated_genes_271_v2_avedetection
 
-anvi-interactive -p SAR11_268_v2.db \
-                 -d LAYERS/LAYERS_SAR11_268_v5_averages.txt \
+anvi-interactive -p SAR11_271_v2.db \
+                 -d LAYERS/LAYERS_SAR11_271_v5_averages.txt \
                  -t concatenated-best_alphaproteobacteria165_out-clean.fa.contree \
-                 --title "SAR11_268_v2_avs" \
+                 --title "SAR11_271_v2_avs" \
                  --manual    
 
 
@@ -274,13 +274,13 @@ write_delim(LAYERS_SAR11_481_v15_ecogenomics_GTDB, file="LAYERS_SAR11_481_v15_ec
 # Some manual updates and now its v16
 LAYERS_SAR11_481_v16_ecogenomics_GTDB <- read.delim("LAYERS_SAR11_481_v16_ecogenomics_GTDB.txt", header = TRUE,  sep = "\t")
 
-# Going to import this into the 268 genomes layers and make a tree with that because that actually makes more sense
-LAYERS_SAR11_268_v5 <- read.delim("LAYERS_SAR11_268_v5.txt", header = TRUE,  sep = "\t")
+# Going to import this into the 271 genomes layers and make a tree with that because that actually makes more sense
+LAYERS_SAR11_271_v5 <- read.delim("LAYERS_SAR11_271_v5.txt", header = TRUE,  sep = "\t")
 
-LAYERS_SAR11_268_v6 <- LAYERS_SAR11_268_v5 %>% 
+LAYERS_SAR11_271_v6 <- LAYERS_SAR11_271_v5 %>% 
   left_join(y=LAYERS_SAR11_481_v16_ecogenomics_GTDB, by=c("accession" = "accession"))
 
-write.csv(LAYERS_SAR11_268_v6, file="LAYERS/LAYERS_SAR11_268_v6.csv")
+write.csv(LAYERS_SAR11_271_v6, file="LAYERS/LAYERS_SAR11_271_v6.csv")
 
 # See below for new anvi interactive
 
@@ -290,10 +290,10 @@ write.csv(LAYERS_SAR11_268_v6, file="LAYERS/LAYERS_SAR11_268_v6.csv")
 
 ```{bash}
 
-anvi-interactive -p SAR11_268_v2.db \
-                 -d LAYERS/LAYERS_SAR11_268_v6.txt \
+anvi-interactive -p SAR11_271_v2.db \
+                 -d LAYERS/LAYERS_SAR11_271_v6.txt \
                  -t concatenated-best_alphaproteobacteria165_out-clean.fa.contree \
-                 --title "SAR11_268_v2_GTDB" \
+                 --title "SAR11_271_v2_GTDB" \
                  --manual   
 
 ```
@@ -339,7 +339,7 @@ setwd ("~/path/to/working/directory")
 
 II_include <- read.delim("II_to_include.txt", header = TRUE,  sep = "\t") 
 
-external_paths <- read.delim("external_genomes_504_set_outgroup_v3.txt", header = TRUE,  sep = "\t") 
+external_paths <- read.delim("external_genomes.txt", header = TRUE,  sep = "\t") 
 
 external_genomes_II_include <- II_include %>% 
   left_join(y=external_paths, by=c("name" = "name"))
