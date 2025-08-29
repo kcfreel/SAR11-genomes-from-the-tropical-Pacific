@@ -1,0 +1,149 @@
+
+In order to ensure that all of the genera are stable across the different outgroups leveraged here is a comparison of trees
+
+Initially all trees were generated in IQtree and then the contree file was processed with MADroot to re-root phylogenies. 
+This rooting was problematic, leaving long branches at internal nodes and extremely short branches as the root. 
+I then used iTOL to re-root using the midpoint method and exported them in NEXUS format. 
+Then all trees were compared using phytools to ensure that  groups within trees (aka SAR11 genera) were stable. 
+
+```{r}
+
+# This was mostly done using phytools to sort things 
+# Resources for phytools summarized on this site: http://www.phytools.org/
+
+setwd(dir = "/path/to/files/")
+
+# Load all the packages needed
+library(dplyr)
+library(ggtree)
+library(tidyverse)
+library(phytools) # Had to update R to get this to work because of dependencies on "ape"
+library(here)
+library(tidytree)
+library(svglite)
+library(treeio)
+
+library(phytools)
+library(ape)
+
+```
+
+Now read in the files to be compared
+```{r}
+
+Phy1_Pseudomonadales <- readNexus(file = "/path/to/files/comparison/P1_Pseudomonadales_midpoint_boot.nexus")
+
+Phy2_Gammaproteobacteria <- readNexus(file = "/path/to/files/comparison/P2_broadGamma_midroot.nexus")
+
+Phy3_Rhodobacteraceae <- readNexus(file = "/path/to/files/comparison/P3_Original_midroot.nexus")
+
+Phy4_none <- readNexus(file = "/path/to/files/comparison/P4_noOutgroup_midroot.nexus")
+
+```
+
+# These guys were imported into FigTree and then exported in NEXUS format with the boxes checked for (1) Save as currently displayed and (2) "Include Annotations (NEXUS & JSON only)"
+
+```{r}
+
+Phy1_Pseudomonadales <- readNexus(file = "/path/to/files/comparison/FigTree_NEXUS/Phy1")
+
+Phy2_Gammaproteobacteria <- readNexus(file = "/path/to/files/comparison/FigTree_NEXUS/Phy2")
+
+Phy3_Rhodobacteraceae <- readNexus(file = "/path/to/files/comparison/FigTree_NEXUS/Phy3")
+
+Phy4_none <- readNexus(file = "/path/to/files/comparison/FigTree_NEXUS/Phy4")
+
+```
+
+Comparison time 
+
+```{r}
+
+# Cophylogeny for Phy1 and Phy2 
+
+# When the tip labels are identical there is no need to include an associated matrix with what corresponds to what
+Phy1_Phy2.cophylo <- cophylo(Phy1_Pseudomonadales, Phy2_Gammaproteobacteria, assoc = NULL, rotate = TRUE)
+
+Phy1_Phy2 <- plot(Phy1_Phy2.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.25), use.edge.length=TRUE)
+
+# untangle(Phy2_Gammaproteobacteria) # not sure this actually did anything 
+
+# untangle(Phy1_Phy2.cophylo, method=c("reorder", "read.tree")) # also unclear on utility 
+
+# Saving a file of this version1 that is a comparison between tr1 and tr2
+svg("/path/to/files/comparison/FigTree_NEXUS/Phy1_Phy2.svg", width = 25, height = 50, pointsize = 8)
+plot(Phy1_Phy2.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.25), use.edge.length=TRUE)
+dev.off()
+
+# Testing things with tr1 and tr2, probably ignore this bit 
+# tr1_tr2.cophylo2 <- cophylo(tr1, tr2, assoc = NULL, rotate = TRUE)
+# tr1_tr2.cophylo2 <- cotangleplot(tr1, tr2, assoc = NULL, rotate = TRUE)
+# plot(tr1_tr2.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.1), )
+# cotangleplot(tr1, tr2, type=c("phylogram"), use.edge.length=TRUE, tangle=c("tr2"))
+
+-----------------
+# Moving on to tree 1 and tree 3
+Phy1_Phy3.cophylo <- cophylo(Phy1_Pseudomonadales, Phy3_Rhodobacteraceae, assoc = NULL, rotate = TRUE)
+
+Phy1_Phy3 <- plot(Phy1_Phy3.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))        
+
+svg("/path/to/files/comparison/FigTree_NEXUS/Phy1_Phy3.svg", width = 25, height = 50, pointsize = 8)
+plot(Phy1_Phy3.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05), use.edge.length=TRUE)
+dev.off()
+
+-----------------
+# Moving on to tree 1 and tree 4
+# Honestly prob will be the same as 1 and 3
+Phy1_Phy4.cophylo <- cophylo(Phy1_Pseudomonadales, Phy4_none, assoc = NULL, rotate = TRUE)
+
+Phy1_Phy4 <- plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))     
+
+# untangle(Phy1_Phy4.cophylo, method=c("reorder", "read.tree")) # also unclear on utility 
+# Phy1_Phy4 <- plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))       
+
+svg("/path/to/files/comparison/FigTree_NEXUS/Phy1_Phy4.svg", width = 25, height = 50, pointsize = 8)
+plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05), use.edge.length=TRUE)
+dev.off()
+
+-----------------
+# Moving on to tree 2 and tree 3
+# Honestly prob will be the same as 1 and 3
+Phy2_Phy3.cophylo <- cophylo(Phy2_Gammaproteobacteria, Phy3_Rhodobacteraceae, assoc = NULL, rotate = TRUE)
+
+Phy2_Phy3 <- plot(Phy2_Phy3.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))     
+
+# untangle(Phy1_Phy4.cophylo, method=c("reorder", "read.tree")) # also unclear on utility 
+# Phy1_Phy4 <- plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))       
+
+svg("/path/to/files/comparison/FigTree_NEXUS/Phy2_Phy3.svg", width = 25, height = 50, pointsize = 8)
+plot(Phy2_Phy3.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05), use.edge.length=TRUE)
+dev.off()
+
+-----------------
+# Moving on to tree 2 and tree 4
+# Honestly prob will be the same as 1 and 3
+Phy2_Phy4.cophylo <- cophylo(Phy2_Gammaproteobacteria, Phy4_none, assoc = NULL, rotate = TRUE)
+
+Phy2_Phy4 <- plot(Phy2_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))     
+
+# untangle(Phy1_Phy4.cophylo, method=c("reorder", "read.tree")) # also unclear on utility 
+# Phy1_Phy4 <- plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))       
+
+svg("/path/to/files/comparison/FigTree_NEXUS/Phy2_Phy4.svg", width = 25, height = 50, pointsize = 8)
+plot(Phy2_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05), use.edge.length=TRUE)
+dev.off()
+
+-----------------
+# Moving on to tree 3 and tree 4
+        
+Phy3_Phy4.cophylo <- cophylo(Phy3_Rhodobacteraceae, Phy4_none, assoc = NULL, rotate = TRUE)
+
+Phy3_Phy4 <- plot(Phy3_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))     
+
+# untangle(Phy1_Phy4.cophylo, method=c("reorder", "read.tree")) # also unclear on utility 
+# Phy1_Phy4 <- plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05))       
+
+svg("/path/to/files/comparison/FigTree_NEXUS/Phy3_Phy4.svg", width = 25, height = 50, pointsize = 8)
+plot(Phy1_Phy4.cophylo, link.type="curved", link.lwd=4, link.lty="solid",link.col=make.transparent("red", 0.05), use.edge.length=TRUE)
+dev.off()
+```
