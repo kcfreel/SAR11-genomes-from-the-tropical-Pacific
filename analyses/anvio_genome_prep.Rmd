@@ -1,0 +1,265 @@
+
+# Prepping all the genomes
+
+*Note: anvi'o does not like . or - in the middle of names, so I have retroactively updated all file names in the SAGs list that had these
+
+### This is for the outgroup:
+
+```{bash}
+# First all of the genomes were reformatted
+for i in *.fna; do                 
+anvi-script-reformat-fasta $i \
+                           -o reformat/$i \
+                           --simplify-names
+done
+
+# I then updated the names of all of the files to be succinct and put these genomes in the "reformat_rename" folder
+
+# Note the files used are in the following directory: "/path/to/files/data/GENOMES/01_OUTGROUP/FASTA/reformat_rename" if the full outgroup file names are needed see the ".../FASTA/reformat" folder 
+
+parallel --dryrun -j 2 anvi-gen-contigs-database -L 2000 -f ./FASTA/reformat_rename/{}.fna -o ./02_CONTIGS_outgroup/{}.db -n "{}" ::: \
+` find ./FASTA/reformat_rename/ -name "*.fna"  | cut -d "/" -f4 | cut -d "." -f1 | sort `
+
+# Since these CONTIGS.db were generated a while ago I had to use
+anvi-migrate --migrate-safely 01_CONTIGS/01_CONTIGS_outgroup/*.db
+
+```
+
+### This is for the SAGs:
+
+```{bash}
+
+# First all of the genomes were reformatted
+for i in *.fa; do                 
+anvi-script-reformat-fasta $i \
+                           -o reformat/$i \
+                           --simplify-names
+done
+
+# Note the files used are in the following directory: 
+
+parallel -j 10 anvi-gen-contigs-database -L 2000 \
+        -f /path/to/files/data/GENOMES/02_SAGs/FASTA/reformat/{}_genomic.fa \
+        -o /path/to/files/data/01_CONTIGS/02_CONTIGS_sags/{}.db -n "{}" ::: \
+` find /path/to/files/data/GENOMES/02_SAGs/FASTA/reformat/ -name "*.fa"  | cut -d "/" -f12 | cut -d "_" -f1-3 | sort `
+
+```
+
+### This is for the reference isolate genomes:
+
+```{bash}
+
+# These genomes had previously been reformatted
+
+# Note the files used are in the following directory: 
+
+parallel -j 10 anvi-gen-contigs-database -L 2000 \
+        -f /path/to/files/data/GENOMES/03_reference_genomes/FASTA/{}_headers_fixed.fa \
+        -o /path/to/files/data/01_CONTIGS/03_CONTIGS_reference_genomes/{}.db -n "{}" ::: \
+` find /path/to/files/data/GENOMES/03_reference_genomes/FASTA/ -name "*.fa"  | cut -d "/" -f11 | cut -d "_" -f1 | sort `
+
+```
+
+### This is for the new isolates:
+
+```{bash}
+
+for i in *.fa; do                 
+anvi-script-reformat-fasta $i \
+                           -o reformat/$i \
+                           --simplify-names
+done
+
+# Note the files used are in the following directory: 
+
+parallel -j 10 anvi-gen-contigs-database -L 2000 \
+        -f /path/to/files/data/GENOMES/04_new_isolate_genomes/FASTA/reformat/{}.fa \
+        -o /path/to/files/data/01_CONTIGS/04_CONTIGS_new_genomes/{}.db -n "{}" ::: \
+` find /path/to/files/data/GENOMES/04_new_isolate_genomes/FASTA/reformat/ -name "*.fa"  | cut -d "/" -f12 | cut -d "." -f1 | sort `
+
+```
+
+
+### Making it easy peasy to make all the trees 
+
+
+```{bash}
+# For all of the other standard trees
+
+for i in ./01_CONTIGS/*/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+# Just need to be able to pull the genes of interest from the custom Alphaproteobacteria SCGs for the phylogeny from all of these contigs.db
+
+for i in ./01_CONTIGS/*/*.db; do
+  anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+```
+
+
+Corrections corner 
+
+```{bash}
+
+# Realized two genomes were missing original paths and corrected also updated to .fa, realized it was because the CLC_* portion was not the same format as the rest of the genomes, so when CONTIGS were created this was screwed up
+GCA_001179845.1_CLC_assembled_contigs_genomic.fa
+GCA_001179925.1_CLC_assembled_contigs_genomic.fa
+
+parallel -j 10 anvi-gen-contigs-database -L 2000 \
+        -f /path/to/files/data/GENOMES/fix_delete/reformat/{}_CLC_assembled_contigs_genomic.fna \
+        -o /path/to/files/data/01_CONTIGS/fix_delete_contigs/{}.db -n "{}" ::: \
+` find /path/to/files/data/GENOMES/fix_delete/reformat/ -name "*.fna"  | cut -d "/" -f11 | cut -d "_" -f1-2 | sort `
+
+for i in *.db; do
+  anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+
+```
+
+
+```{bash}
+
+# Anvio has problems with certain characters so all . and - were replaced with _
+# After this was done for all CONTIG.db file names, it was corrected in the path to file names as well
+
+for file in *"-"*; do
+    mv "$file" "${file//-/_}"
+done
+
+for file in *; do
+  if echo "$file" | grep -q '\.1'; then
+    newfile=$(echo "$file" | sed 's/\.1/_1/g')
+    mv "$file" "$newfile"
+  fi
+done
+```
+
+
+### This is for the Ic and II MAG genomes
+
+```{bash}
+parallel -j 2 anvi-gen-contigs-database -L 2000 -f ./FASTA/reformat_rename/{}.fna -o ./02_CONTIGS_outgroup/{}.db -n "{}" ::: \
+` find ./FASTA/reformat_rename/ -name "*.fna"  | cut -d "/" -f4 | cut -d "." -f1 | sort `
+
+anvi-gen-contigs-database -L 2000 -f GENOMES/05_Ic_II_SAG_MAG/reformat/GCA_017640265.1_ASM1764026v1_genomic.fna -o ./01_CONTIGS/05_CONTIGS_Ic_II_sag_mag/GCA_017640265.1_ASM1764026v1.db -n GCA_017640265.1_ASM1764026v1
+
+GCA_017640275.1_ASM1764027v1_genomic.fna
+
+anvi-gen-contigs-database -L 2000 -f GENOMES/05_Ic_II_SAG_MAG/reformat/GCA_017640275.1_ASM1764027v1_genomic.fna -o ./01_CONTIGS/05_CONTIGS_Ic_II_sag_mag/GCA_017640275.1_ASM1764027v1.db -n GCA_017640275.1_ASM1764027v1
+
+for i in ./05_CONTIGS_Ic_II_sag_mag/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+# Just need to be able to pull the genes of interest from the custom Alphaproteobacteria SCGs for the phylogeny from all of these contigs.db
+
+for i in ./05_CONTIGS_Ic_II_sag_mag/*.db; do
+  anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+```
+
+# ADD HERE
+# This is for the LSUCC0261, LSUCC0664, and LSUCC0723 
+
+```{bash}
+
+for i in *.fa; do                 
+anvi-script-reformat-fasta $i \
+                           -o reformat/$i \
+                           --simplify-names
+done
+
+parallel -j 2 anvi-gen-contigs-database -L 2000 -f GENOMES/06_LSUCC/reformat/{}.fa -o 01_CONTIGS/06_CONTIGS_LSUCC/{}.db -n "{}" ::: \
+` find GENOMES/06_LSUCC/reformat/ -name "*.fa"  | cut -d "/" -f4 | cut -d "." -f1 | sort `
+
+for i in 01_CONTIGS/06_CONTIGS_LSUCC/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+# Just need to be able to pull the genes of interest from the custom Alphaproteobacteria SCGs for the phylogeny from all of these contigs.db
+
+for i in 01_CONTIGS/06_CONTIGS_LSUCC/*.db; do
+  anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+```
+
+### This is for the alternative outgroups
+
+```{bash}
+
+## the alternative outgroup - Rickettsia
+# Ended up not going this direction, too closely related
+
+for i in *.fna; do                 
+anvi-script-reformat-fasta $i \
+                           -o reformat/$i \
+                           --simplify-names
+done
+
+parallel -j 9 anvi-gen-contigs-database -L 2000 -f ./GENOMES/01b_OUTGROUP_rickettsia/FASTA/reformat_rename/{}.fa -o ./01_CONTIGS/01b_CONTIGS_outgroup_rickettsia/{}.db -n "{}" ::: \
+` find ./GENOMES/01b_OUTGROUP_rickettsia/FASTA/reformat_rename/ -name "*.fa"  | cut -d "/" -f6 | cut -d "." -f1 | sort `
+
+for i in ./01_CONTIGS/01b_CONTIGS_outgroup_rickettsia/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+for i in ./01_CONTIGS/01b_CONTIGS_outgroup_rickettsia/*.db; do
+anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+## the alternative outgroup - Gammaproteobacteria, but broad
+
+for i in *.fna; do                 
+anvi-script-reformat-fasta $i \
+                           -o reformat/$i \
+                           --simplify-names
+done
+
+parallel -j 9 anvi-gen-contigs-database -L 2000 -f ./GENOMES/01c_OUTGROUP_gammaproteobacteria_broad/FASTA/reformat_rename/{}.fa -o ./01_CONTIGS/01c_OUTGROUP_gammaproteobacteria_broad/{}.db -n "{}" ::: \
+` find ./GENOMES/01c_OUTGROUP_gammaproteobacteria_broad/FASTA/reformat_rename/ -name "*.fa"  | cut -d "/" -f6 | cut -d "." -f1 | sort `
+
+for i in ./01_CONTIGS/01c_OUTGROUP_gammaproteobacteria_broad/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+for i in ./01_CONTIGS/01c_OUTGROUP_gammaproteobacteria_broad/*.db; do
+anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+
+## the alternative outgroup - Gammaproteobacteria, but narrow
+
+parallel -j 9 anvi-gen-contigs-database -L 2000 -f ./GENOMES/01d_OUTGROUP_pseudomonadales/FASTA/reformat_rename/{}.fa -o ./01_CONTIGS/01d_OUTGROUP_pseudomonadales/{}.db -n "{}" ::: \
+` find ./GENOMES/01d_OUTGROUP_pseudomonadales/FASTA/reformat_rename/ -name "*.fa"  | cut -d "/" -f6 | cut -d "." -f1 | sort `
+
+for i in ./01_CONTIGS/01d_OUTGROUP_pseudomonadales/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+for i in ./01_CONTIGS/01d_OUTGROUP_pseudomonadales/*.db; do
+anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+
+## the additional subgroup V genomes to include
+
+parallel -j 9 anvi-gen-contigs-database -L 2000 -f ./GENOMES/07_SAR11_subgroupV/FASTA/reformat_rename/{}.fa -o ./01_CONTIGS/07_SAR11_subgroupV/{}.db -n "{}" ::: \
+` find ./GENOMES/07_SAR11_subgroupV/FASTA/reformat_rename/ -name "*.fa"  | cut -d "/" -f6 | cut -d "." -f1 | sort `
+
+for i in ./01_CONTIGS/07_SAR11_subgroupV/*.db; do
+  anvi-run-hmms --num-threads 25 -c $i;
+done
+
+for i in ./01_CONTIGS/07_SAR11_subgroupV/*.db; do
+anvi-run-hmms -H /path/to/files/custom_hmms/Alphaproteobacterial_SCGs --num-threads 25 -c $i;
+done
+
+
+```
+
+
