@@ -10,7 +10,9 @@ The bacterial order Pelagibacterales (SAR11) is widely distributed across the gl
 
 
 ### Data and materials availability
-The assembled sequence data for genomes reported here including raw sequencing reads are available on NCBI associated with BioProject PRJNA1170004XXXXXXX, and also available at FigShare at https://doi.org/10.6084/m9.figshare.28087454.v1 in addition to full length 16S rRNA gene sequences (10.6084/m9.figshare.29983285).
+The assembled sequence data for genomes reported here including raw sequencing reads are available on NCBI associated with BioProject PRJNA1170004, and also available at FigShare at https://doi.org/10.6084/m9.figshare.28087454.v1 in addition to full length 16S rRNA gene sequences (10.6084/m9.figshare.29983285).
 
+### Reproducible SAR11 phylogenomics workflow 
+The URL https://merenlab.org/data/sar11-phylogenomics/ serves a reproducible bioinformatics workflow with all the genomes used in our study to reproduce our phylogenomic tree or extend it with new genomes.
 
 ### This directory has the code used for the analyses in the manuscript 
