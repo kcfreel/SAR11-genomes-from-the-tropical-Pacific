@@ -1,0 +1,194 @@
+
+```{r}
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(maps)
+library(sf)
+library(marmap)
+library(mapdata)
+library(ggspatial)
+library(here)
+library(rnaturalearth)
+library(rnaturalearthdata)
+
+```
+
+#basemap for Hawaiʻi vs BATS
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+lakes <- rnaturalearth::ne_download(scale = 110, 
+                     type = 'lakes', 
+                     category = 'physical') %>% 
+      sf::st_as_sf(lakes110, crs = 4269)
+
+world_map <- ggplot() +
+  ggplot2::geom_sf(data=world, fill = "black", color = "black") +
+  # geom_polygon(aes(x=long, y = lat, group = group), fill = "#8a8a8a", color = "#8a8a8a", linewidth = 0.05) + 
+  # coord_fixed(1.3) + 
+         geom_sf(data = lakes,
+          mapping = aes(geometry = geometry),
+        color = "black",
+        fill = "white")  +
+  theme(
+      #axis.text = element_blank(),
+      #axis.line = element_blank(),
+      #axis.ticks = element_blank(),
+      #panel.border = element_blank(),
+      panel.grid = element_blank(),
+      #axis.title = element_blank(),
+      panel.background = element_rect(fill = "white"),
+      plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(-164, -50), 
+                     breaks = c(-160,-140,-120,-100,-80,-60)) +
+  scale_y_continuous(limits = c(-2,65), 
+                     breaks = c(0,20,40,60)) +
+        geom_point(aes(x = -64.5,y=32.1667)) + 
+        xlab(label = element_blank()) +
+        ylab(label = element_blank()) +
+          ggspatial::annotation_scale(
+            style = "bar",
+            location = "bl",
+            text_family = "times",
+            text_cex = 1,
+            width_hint = 0.2)
+          
+
+world_map
+
+ggsave(filename = here("figures_schemaics/maps/world_map.png"), plot = world_map, device = "png",dpi = 1200, width = 16, height = 9, units = "in")
+
+ggsave(filename = here("figures_schemaics/maps/world_map.svg"), plot = world_map, device = "svg",dpi = 1200, width = 16, height = 9, units = "in")
+
+```
+
+# Immport data for Hawaiʻi maps
+```{r}
+#Data was obtained from the (Hawaii Statewide GIS Data website)[https://planning.hawaii.gov/gis/download-gis-data-expanded/].
+#tutorial from: https://rpubs.com/alex812818726/1144698
+# Read in files
+coastline_raw_shp <- sf::st_read(dsn = here("figures_schemaics/maps/coastline.shp/coastline.shp"), stringsAsFactors = FALSE)
+
+original_crs <- sf::st_crs("+proj=utm +zone=4 +datum=NAD83 +units=m +no_defs")
+sf::st_crs(coastline_raw_shp) <- original_crs
+coastlines <- sf::st_transform(coastline_raw_shp, crs = 4326)
+plot(st_geometry(coastlines), axes = TRUE, lwd = 3) # check
+
+streams_raw_shp <- sf::st_read(dsn = here("kelle/maps/streams_dar.shp"), stringsAsFactors = FALSE)
+original_crs <- sf::st_crs("+proj=utm +zone=4 +datum=NAD83 +units=m +no_defs")
+sf::st_crs(streams_raw_shp) <- original_crs
+streams <- sf::st_transform(streams_raw_shp, crs = 4326)
+ plot(st_geometry(streams), axes = TRUE) # check
+```
+
+# Make maps for main Hawaiian Islands and then Oʻahu and Station ALOHA
+```{r}
+# Map coastline layer and stream layer overlay
+main_hi <- ggplot() +
+  ggplot2::geom_sf(data=coastlines, fill = "#8a8a8a", color = "black", lwd = .1) +
+  #ggplot2::geom_sf(data=streams, color = "black", lwd = 0.25) +
+  ggplot2::coord_sf(datum=st_crs(coastlines)) +
+    theme(
+      #axis.text = element_blank(),
+      #axis.line = element_blank(),
+      #axis.ticks = element_blank(),
+      #panel.border = element_blank(),
+      panel.grid = element_blank(),
+      #axis.title = element_blank(),
+      panel.background = element_rect(fill = "white"),
+      plot.title = element_text(hjust = 0.5)) +
+        geom_point(aes(x = -158,y=22.75)) + 
+        xlab(label = element_blank()) +
+        ylab(label = element_blank()) +
+          ggspatial::annotation_scale(
+            style = "bar",
+            location = "bl",
+            text_family = "times",
+            text_cex = 1,
+            width_hint = 0.25)
+
+main_hi
+
+ggsave(filename = here("figures_schemaics/maps/main_hi.png"), plot = main_hi, device = "png",dpi = 1200, width = 16, height = 9, units = "in")
+
+ggsave(filename = here("figures_schemaics/maps/main_hi.svg"), plot = main_hi, device = "svg",dpi = 1200, width = 16, height = 9, units = "in")
+  
+
+# Map coastline layer zoomed in on Oʻahu and station ALOHA and stream layer overlay 
+oahu_ALOHA <- ggplot() +
+  ggplot2::geom_sf(data=coastlines, fill = "#8a8a8a", color = "black", lwd = .1) +
+  #ggplot2::geom_sf(data=streams, color = "black", lwd = 0.25) +
+  ggplot2::coord_sf(datum=st_crs(coastlines)) +
+    theme(
+      #axis.text = element_blank(),
+      #axis.line = element_blank(),
+      #axis.ticks = element_blank(),
+      #panel.border = element_blank(),
+      panel.grid = element_blank(),
+      #axis.title = element_blank(),
+      panel.background = element_rect(fill = "white"),
+      plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(-159, -157.5), 
+                     breaks = c(-158.5,-158,-157.5)) +
+  scale_y_continuous(limits = c(21,23), 
+                     breaks = c(21, 21.25, 22, 22.25, 21.5,21.75, 22, 22.25, 22.5, 22.75, 23)) +
+        geom_point(aes(x = -158,y=22.75)) + 
+        xlab(label = element_blank()) +
+        ylab(label = element_blank()) +
+          ggspatial::annotation_scale(
+            style = "bar",
+            location = "bl",
+            text_family = "times",
+            text_cex = 1,
+            width_hint = 0.25)
+
+oahu_ALOHA
+
+ggsave(filename = here("figures_schemaics/maps/Oahu_ALOHA.png"), plot = oahu_ALOHA, device = "png",dpi = 1200, width = 8, height = 9, units = "in")
+
+ggsave(filename = here("figures_schemaics/maps/Oahu_ALOHA.svg"), plot = oahu_ALOHA, device = "svg",dpi = 1200, width = 8, height = 9, units = "in")
+  
+```
+
+# Closer view of Kāneʻohe Bay 
+
+```{r}
+# Zoom in to Kaneohe Bay, Hawaii 
+kbay_base <- base_map_0 +
+  scale_x_continuous(limits = c(-157.923, -157.693), 
+                     breaks = c(-157.8)) +
+  scale_y_continuous(limits = c(21.387, 21.554), 
+                     breaks = c(21.4)) 
+kbay_base
+
+
+kbay_base2 <- kbay_base +
+  ggspatial::annotation_scale(
+    style = "ticks",
+    location = "bl",
+    text_family = "times",
+    text_cex = 1
+  ) +
+  ggspatial::annotation_north_arrow(
+    which_north = "true",
+    location = "tl",
+    pad_x = unit(1.1, "in"), 
+    pad_y = unit(0.1, "in"),
+    height = unit(0.25, "in"),
+    width = unit(0.15, "in"),
+    style = ggspatial::north_arrow_orienteering(
+      line_width = 0.8,
+      line_col = "black",
+      fill = c("white", "black"),
+      text_col = "black",
+      text_family = "times",
+      text_face = NULL,
+      text_size = 5,
+      text_angle = 0)
+    ) 
+
+kbay_base2
+```
+
